@@ -65,9 +65,12 @@ td.nu{text-align:right}td.mg{color:var(--nw)}
 <label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label>
 <label>Zoom <input type="range" id="zoom" min="2" max="30" value="8"></label>
 <label><input type="checkbox" id="showO" checked> Planning initial</label>
+<label><input type="checkbox" id="showL" checked> Liens</label>
 <span id="lv"></span>
 <details id="dd"><summary>Colonnes ▾</summary><div class="pan" id="pan"></div></details>
 <button id="bf">Effacer filtres/tri</button>
+<button id="bh" disabled>Export HTML</button>
+<button id="bp" disabled>Export PDF</button>
 <button id="bx" disabled>Export XML</button>
 <button id="bc" disabled>Export CSV</button>
 </header>
@@ -239,7 +242,7 @@ function render(){
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60;
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
   $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>`;
-  let h=`<div style="width:${W}px"><div class="gh">`;
+  let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${c.toLocaleDateString('fr-FR',{month:'short'})}</span></div>`;
   h+='</div>';
@@ -251,8 +254,9 @@ function render(){
       b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
     h+=`<div class="gr${t.kids.length?' sm':''}" title="${esc(tip)}" style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%">${b}</div>`;
   });
-  $('R').innerHTML=h+'</div>';
-  $('bx').disabled=$('bc').disabled=false;
+  const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(d=>`<path d="${d}" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
+  $('R').innerHTML=h+lk+'</div>';
+  $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;
 }
 
 /* ---- Menu de filtre façon Excel ---- */
@@ -315,6 +319,71 @@ $('lv').addEventListener('click',e=>{
   collapsed=new Set(+n?tasks.filter(t=>t.kids.length&&t.lvl>=+n).map(t=>t.uid):[]);render();
 });
 
+
+/* ---- Liens entre tâches ---- */
+function linkPaths(rs,x,y0){
+  const idx=new Map(rs.map((t,i)=>[t.uid,i])),out=[];
+  rs.forEach((t,j)=>t.preds.forEach(p=>{
+    const q=byUid[p.uid],i=q?idx.get(q.uid):undefined;if(i===undefined)return;
+    const se=p.type<2,te=p.type%2===0;           /* 0 FF, 1 FD, 2 DF, 3 DD */
+    const x1=x(se?q.nf:q.ns),x2=x(te?t.nf:t.ns),y1=y0+i*26+16,y2=y0+j*26+16;
+    const xa=x1+(se?6:-6),xb=x2+(te?6:-6),ym=y2<y1?y1-13:y1+13;
+    out.push(p.type===1&&xa<=xb?`M${x1} ${y1}H${xa}V${y2}H${x2}`:`M${x1} ${y1}H${xa}V${ym}H${xb}V${y2}H${x2}`);
+  }));
+  return out;
+}
+
+/* ---- Export HTML / PDF : image fidèle de la vue courante ---- */
+function buildSVG(){
+  const vc=vcols(),rs=rows(),ppd=+$('zoom').value,show=$('showO').checked,k=+$('k').value||1;
+  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+  const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60;
+  const y0=TOP+HH,H=y0+rs.length*RH+4,x=d=>GX+(d-t0)/DAY*ppd+8;
+  const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
+  const cell=(cx,y,w,h,i)=>`<svg x="${cx}" y="${y}" width="${w}" height="${h}">${i}</svg>`;
+  const dia=(cx,cy,r,f)=>`<polygon points="${cx},${cy-r} ${cx+r},${cy} ${cx},${cy+r} ${cx-r},${cy}" fill="${f}"/>`;
+  let top=`<rect width="${W}" height="${H}" fill="#fff"/><text x="8" y="22" font-size="15" font-weight="700" fill="#1d2b2a">${esc(fname)} · planning avec marge ×${k} · fin initiale ${fd(new Date(oE))} → fin avec marge ${fd(new Date(nE))}</text><rect y="${TOP}" width="${W}" height="${HH}" fill="#eef1ee"/>`;
+  let bg='',grid='',tx='',bars='',cx=0;const xs=[];
+  vc.forEach(c=>{xs.push(cx);
+    tx+=cell(cx,TOP,c.w-2,HH,`<text x="6" y="25" font-weight="600" fill="#1d2b2a">${esc(c.label)}${sort&&sort.k===c.k?(sort.d>0?' ↑':' ↓'):''}${filt[c.k]?' ▾':''}</text>`);
+    cx+=c.w;grid+=`<line x1="${cx}" y1="${TOP}" x2="${cx}" y2="${H}" stroke="#dfe4e0"/>`});
+  grid+=`<line x1="${GX}" y1="${TOP}" x2="${GX}" y2="${H}" stroke="#aab4b2" stroke-width="2"/>`;
+  const m=new Date(t0);m.setDate(1);const first=+m;
+  for(;+m<=t1;m.setMonth(m.getMonth()+1)){const mx=x(m);
+    grid+=`<line x1="${mx}" y1="${TOP}" x2="${mx}" y2="${H}" stroke="#e6ebe8"/>`+
+      (m.getMonth()===0||+m===first?`<text x="${mx+4}" y="${TOP+14}" font-weight="700" fill="#1d2b2a">${m.getFullYear()}</text>`:'')+
+      `<text x="${mx+4}" y="${TOP+32}" font-size="11" fill="#6b7a78">${m.toLocaleDateString('fr-FR',{month:'short'})}</text>`}
+  rs.forEach((t,i)=>{
+    const ry=y0+i*RH,sm=t.kids.length>0;
+    if(sm)bg+=`<rect y="${ry}" width="${GX}" height="${RH}" fill="#f1f5f3"/>`;
+    bg+=`<line x1="0" y1="${ry+RH}" x2="${W}" y2="${ry+RH}" stroke="#dfe4e0"/>`;
+    vc.forEach((c,j)=>{
+      let d=fmt(c,t.v[c.k]),ix=6;const nu=['num','dur'].includes(c.type);
+      if(c.k==='Name'){ix=6+(t.lvl-1)*16;if(sm)d=(collapsed.has(t.uid)?'▶ ':'▼ ')+d;else ix+=14}
+      tx+=cell(xs[j],ry,c.w-2,RH,`<text x="${nu?c.w-8:ix}" y="17"${nu?' text-anchor="end"':''}${sm?' font-weight="600"':''} fill="${/^_(ns|nf|nd|dl)$/.test(c.k)?'#1f6f6b':'#1d2b2a'}">${esc(d)}</text>`)});
+    if(t.ms){if(show)bars+=dia(x(t.s),ry+6,4,'#aab4b2');bars+=dia(x(t.ns),ry+17,5.5,'#d9791c')}
+    else{
+      if(show)bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(2,(t.f-t.s)/DAY*ppd)}" height="6" rx="3" fill="#aab4b2"/>`;
+      bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(2,(t.nf-t.ns)/DAY*ppd)}" height="${sm?8:11}" rx="${sm?0:3}" fill="${sm?'#0f3f3d':'#1f6f6b'}"/>`;
+    }
+  });
+  const lk=$('showL').checked?linkPaths(rs,x,y0).map(d=>`<path d="${d}" fill="none" stroke="#6b7a78" stroke-width="1" marker-end="url(#ar)"/>`).join(''):'';
+  const defs='<defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="#6b7a78"/></marker></defs>';
+  return{s:defs+top+bg+grid+tx+bars+lk,W,H};
+}
+function docHTML(){
+  const{s,W,H}=buildSVG();
+  return`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${esc(fname)} – planning avec marge</title><style>@page{size:${W}px ${H}px;margin:0}html,body{margin:0;background:#fff}svg{display:block}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Segoe UI,system-ui,sans-serif" font-size="12">${s}</svg></body></html>`;
+}
+$('bh').onclick=()=>dl(fname+'-avec-marge.html',docHTML(),'text/html');
+$('bp').onclick=()=>{
+  const f=document.createElement('iframe');
+  f.style.cssText='position:fixed;left:-9999px;top:0;width:1200px;height:800px;border:0';
+  f.srcdoc=docHTML();
+  f.onload=()=>{f.contentWindow.focus();f.contentWindow.print();setTimeout(()=>f.remove(),60000)};
+  document.body.appendChild(f);
+};
+
 /* ---- Exports, colonnes, scroll ---- */
 const dl=(n,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=n;a.click()};
 $('bc').onclick=()=>{
@@ -348,7 +417,7 @@ async function load(f){
   }catch(e){err(e.message)}
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
-['k','mode','zoom','showO'].forEach(i=>$(i).oninput=render);
+['k','mode','zoom','showO','showL'].forEach(i=>$(i).oninput=render);
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>
