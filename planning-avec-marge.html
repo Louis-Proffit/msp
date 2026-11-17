@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planning avec marge</title>
 <style>
-:root{--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#1f6f6b;--su:#0f3f3d;--ms:#d9791c;--ac:#1f6f6b;--hd:#eef1ee}
-@media (prefers-color-scheme:dark){:root{--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#4fc1b9;--su:#2f8f89;--ms:#f09a45;--ac:#4fc1b9;--hd:#212b28}}
+:root{--cr:#d33a2c;--pa:#8a4bd8;--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#1f6f6b;--su:#0f3f3d;--ms:#d9791c;--ac:#1f6f6b;--hd:#eef1ee}
+@media (prefers-color-scheme:dark){:root{--cr:#ff6b5c;--pa:#b48cf5;--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#4fc1b9;--su:#2f8f89;--ms:#f09a45;--ac:#4fc1b9;--hd:#212b28}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
 header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 12px;background:var(--pn);border-bottom:1px solid var(--ln)}
@@ -54,6 +54,10 @@ td.nu{text-align:right}td.mg{color:var(--nw)}
 .n{background:var(--nw);height:11px;top:11px;border-radius:3px}
 .sm.gr .n{background:var(--su);height:8px;top:12px;border-radius:0}
 .m{transform:rotate(45deg)}.m.o{background:var(--or);top:2px;width:8px;height:8px;border-radius:0}.m.n{background:var(--ms);top:12px;width:11px;height:11px;border-radius:0}
+.n.cr,.sm.gr .n.cr{background:var(--cr)}.n.pa,.sm.gr .n.pa{background:var(--pa)}.m.n.cr{background:var(--cr)}.m.n.pa{background:var(--pa)}
+.sel>td,.gr.sel{background-color:color-mix(in srgb,var(--pa) 16%,var(--pn))!important}
+.lb{position:absolute;top:6px;font-size:11px;color:var(--mu);white-space:nowrap;pointer-events:none}
+.pan h4{margin:8px 0 3px;font-size:12px;color:var(--mu)}.pan select{width:100%;margin-top:2px}
 </style>
 </head>
 <body>
@@ -64,8 +68,20 @@ td.nu{text-align:right}td.mg{color:var(--nw)}
 <label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label>
 <label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label>
 <label>Zoom <input type="range" id="zoom" min="0" max="100" value="0" style="width:140px"> <span id="zl" style="min-width:70px"></span></label>
-<label><input type="checkbox" id="showO" checked> Planning initial</label>
-<label><input type="checkbox" id="showL" checked> Liens</label>
+<details id="vw"><summary>Affichage ▾</summary><div class="pan" id="vpan" style="width:310px">
+<label><input type="checkbox" id="showO" checked> Planning initial (barres grises)</label>
+<label><input type="checkbox" id="showL" checked> Liens entre tâches</label>
+<label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label>
+<h4>Chemin critique</h4>
+<label><input type="checkbox" id="showC"> Chemin critique du projet (en rouge)</label>
+<label style="display:block;margin-top:4px">Chemin de la tâche sélectionnée <small>(cliquer une ligne)</small>
+<select id="pm"><option value="none">Aucun</option><option value="predDrive">Prédécesseurs pilotants</option><option value="predAll">Tous les prédécesseurs</option><option value="succDrive">Successeurs pilotants</option><option value="succAll">Tous les successeurs</option><option value="bothDrive">Chemin pilotant complet (avant + après)</option></select></label>
+<h4>Détails à droite des barres</h4>
+<label><input type="checkbox" data-d="nm"> Nom</label><label><input type="checkbox" data-d="id"> ID</label>
+<label><input type="checkbox" data-d="du"> Durée (avec marge)</label><label><input type="checkbox" data-d="st"> Date de début</label>
+<label><input type="checkbox" data-d="fi"> Date de fin</label><label><input type="checkbox" data-d="pc"> % achevé</label>
+<label><input type="checkbox" data-d="rs"> Ressources</label><label><input type="checkbox" data-d="dl"> Décalage de fin</label>
+</div></details>
 <span id="lv"></span>
 <details id="dd"><summary>Colonnes ▾</summary><div class="pan" id="pan"></div></details>
 <button id="bf">Effacer filtres/tri</button>
@@ -108,7 +124,7 @@ function parse(txt){
   const rn={};all('Resource').forEach(r=>rn[g(r,'UID')]=g(r,'Name'));
   const asg={};all('Assignment').forEach(a=>{const r=rn[g(a,'ResourceUID')];if(r)(asg[g(a,'TaskUID')]??=[]).push(r)});
   const ea={};all('ExtendedAttribute').filter(e=>e.parentNode.localName==='ExtendedAttributes').forEach(e=>ea[g(e,'FieldID')]=g(e,'Alias')||g(e,'FieldName'));
-  doc=x;tasks=[];roots=[];byUid={};collapsed=new Set();const keys=[];
+  doc=x;tasks=[];roots=[];byUid={};collapsed=new Set();selUid=null;const keys=[];
   kids(root,'Task').forEach(e=>{
     const uid=g(e,'UID'),v={};
     if(uid==='0'||!g(e,'Start'))return;
@@ -141,6 +157,42 @@ function parse(txt){
     cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
 }
 
+let selUid=null,path=new Set(),pl=new Set();
+const E1=60000;
+function drv(q,t,p){
+  return p.type===1?Math.abs(t.ns-(+q.nf+p.lag))<E1:p.type===3?Math.abs(t.ns-(+q.ns+p.lag))<E1:
+         p.type===0?Math.abs(t.nf-(+q.nf+p.lag))<E1:Math.abs(t.nf-(+q.ns+p.lag))<E1;
+}
+function computeCrit(){
+  tasks.forEach(t=>t.crit=false);
+  const leaves=tasks.filter(t=>!t.kids.length),end=Math.max(...leaves.map(t=>+t.nf)),st=[];
+  leaves.forEach(t=>{if(Math.abs(+t.nf-end)<E1){t.crit=true;st.push(t)}});
+  while(st.length){const c=st.pop();c.preds.forEach(p=>{const q=byUid[p.uid];if(q&&!q.kids.length&&!q.crit&&drv(q,c,p)){q.crit=true;st.push(q)}})}
+  for(let i=tasks.length-1;i>=0;i--)if(tasks[i].kids.length)tasks[i].crit=tasks[i].kids.some(c=>c.crit);
+}
+function computePath(){
+  path=new Set();pl=new Set();
+  const mode=$('pm').value,sel=byUid[selUid];if(!sel||mode==='none')return;
+  path.add(sel.uid);
+  const drvOnly=mode.endsWith('Drive'),P=/^(pred|both)/.test(mode),S=/^(succ|both)/.test(mode),succ={};
+  tasks.forEach(t=>t.preds.forEach(p=>(succ[p.uid]??=[]).push([t,p])));
+  if(P){const st=[sel],seen=new Set([sel.uid]);while(st.length){const c=st.pop();c.preds.forEach(p=>{
+    const q=byUid[p.uid];if(!q||(drvOnly&&!drv(q,c,p)))return;pl.add(q.uid+'>'+c.uid);path.add(q.uid);if(!seen.has(q.uid)){seen.add(q.uid);st.push(q)}})}}
+  if(S){const st=[sel],seen=new Set([sel.uid]);while(st.length){const q=st.pop();(succ[q.uid]||[]).forEach(([c,p])=>{
+    if(drvOnly&&!drv(q,c,p))return;pl.add(q.uid+'>'+c.uid);path.add(c.uid);if(!seen.has(c.uid)){seen.add(c.uid);st.push(c)}})}}
+}
+const clsOf=t=>path.has(t.uid)?' pa':$('showC').checked&&t.crit?' cr':'';
+const clc=t=>path.has(t.uid)?'#8a4bd8':$('showC').checked&&t.crit?'#d33a2c':'';
+const dsel=()=>[...document.querySelectorAll('#vpan [data-d]:checked')].map(e=>e.dataset.d);
+function detailText(t){
+  const o={nm:t.v.Name,id:t.v.ID,du:(t.v._nd&&!t.kids.length?Math.round(+t.v._nd/8*10)/10:Math.round((t.nf-t.ns)/DAY))+' j',
+    st:fd(t.ns),fi:fd(t.nf),pc:(t.v.PercentComplete||0)+' %',rs:t.v._res,dl:'+'+((t.nf-t.f)/DAY).toFixed(1)+' j'};
+  return dsel().map(k=>o[k]).filter(Boolean).join(' · ');
+}
+function labelHTML(t,x){
+  const tx=detailText(t);if(!tx)return'';
+  return`<span class="lb" style="left:${x(Math.max(+t.nf,$('showO').checked?+t.f:0))+(t.ms?10:6)}px">${esc(tx)}</span>`;
+}
 function getPPD(){
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const mx=48,mn=Math.min(mx,Math.max(0.02,($('R').clientWidth-90)/Math.max(1,(t1-t0)/DAY)));
@@ -236,17 +288,17 @@ function buildHead(){
 }
 function render(){
   if(!doc)return;
-  const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);
+  const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);computeCrit();computePath();
   const vc=vcols(),rs=rows(),ppd=getPPD(),showO=$('showO').checked;$('zl').textContent=+$('zoom').value===0?'Tout':'1 j = '+(ppd<10?ppd.toFixed(1):Math.round(ppd))+' px';
-  $('tb').innerHTML=rs.map(t=>`<tr class="${t.kids.length?'sm':''}">`+vc.map(c=>{
+  $('tb').innerHTML=rs.map(t=>`<tr data-u="${t.uid}" class="${t.kids.length?'sm':''}${t.uid===selUid?' sel':''}">`+vc.map(c=>{
     const d=esc(fmt(c,t.v[c.k]));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(t.lvl-1)*16}px"`;
       inner=`<span class="tg"${t.kids.length?` data-u="${t.uid}"`:''}>${t.kids.length?(collapsed.has(t.uid)?'▶':'▼'):''}</span>`+d}
     return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl)$/.test(c.k)?' mg':''}" title="${d}"${pad}>${inner}</td>`}).join('')+'</tr>').join('');
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
-  const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60;
+  const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>`;
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
@@ -254,14 +306,15 @@ function render(){
   h+='</div>';
   rs.forEach(t=>{
     const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
-    let b='';
-    if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n" style="left:${x(t.ns)-5}px"></i>`}
+    let b='';const cc=clsOf(t);
+    if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n${cc}" style="left:${x(t.ns)-5}px"></i>`}
     else{if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
-      b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
-    h+=`<div class="gr${t.kids.length?' sm':''}" title="${esc(tip)}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}</div>`;
+      b+=`<i class="n${cc}" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
+    h+=`<div data-u="${t.uid}" class="gr${t.kids.length?' sm':''}${t.uid===selUid?' sel':''}" title="${esc(tip)}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}${labelHTML(t,x)}</div>`;
   });
-  const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(d=>`<path d="${d}" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
-  $('R').innerHTML=h+lk+'</div>';
+  const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'var(--pa)':c==='cr'?'var(--cr)':'currentColor'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
+  const now=Date.now(),td=$('showT').checked&&now>=t0&&now<=t1?`<div style="position:absolute;left:${x(now)}px;top:0;bottom:0;border-left:1px dashed var(--cr);z-index:1;pointer-events:none"></div>`:'';
+  $('R').innerHTML=h+lk+td+'</div>';
   $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;
 }
 
@@ -334,7 +387,8 @@ function linkPaths(rs,x,y0){
     const se=p.type<2,te=p.type%2===0;           /* 0 FF, 1 FD, 2 DF, 3 DD */
     const x1=x(se?q.nf:q.ns),x2=x(te?t.nf:t.ns),y1=y0+i*26+16,y2=y0+j*26+16;
     const xa=x1+(se?6:-6),xb=x2+(te?6:-6),ym=y2<y1?y1-13:y1+13;
-    out.push(p.type===1&&xa<=xb?`M${x1} ${y1}H${xa}V${y2}H${x2}`:`M${x1} ${y1}H${xa}V${ym}H${xb}V${y2}H${x2}`);
+    const d=p.type===1&&xa<=xb?`M${x1} ${y1}H${xa}V${y2}H${x2}`:`M${x1} ${y1}H${xa}V${ym}H${xb}V${y2}H${x2}`;
+    out.push([d,pl.has(q.uid+'>'+t.uid)?'pa':($('showC').checked&&q.crit&&t.crit&&drv(q,t,p)?'cr':'')]);
   }));
   return out;
 }
@@ -343,7 +397,7 @@ function linkPaths(rs,x,y0){
 function buildSVG(){
   const vc=vcols(),rs=rows(),ppd=getPPD(),show=$('showO').checked,k=+$('k').value||1;
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
-  const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60;
+  const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const y0=TOP+HH,H=y0+rs.length*RH+4,x=d=>GX+(d-t0)/DAY*ppd+8;
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
   const cell=(cx,y,w,h,i)=>`<svg x="${cx}" y="${y}" width="${w}" height="${h}">${i}</svg>`;
@@ -363,18 +417,21 @@ function buildSVG(){
   rs.forEach((t,i)=>{
     const ry=y0+i*RH,sm=t.kids.length>0;
     if(sm)bg+=`<rect y="${ry}" width="${GX}" height="${RH}" fill="#f1f5f3"/>`;
+    if(t.uid===selUid)bg+=`<rect y="${ry}" width="${W}" height="${RH}" fill="#ece6f8"/>`;
     bg+=`<line x1="0" y1="${ry+RH}" x2="${W}" y2="${ry+RH}" stroke="#dfe4e0"/>`;
     vc.forEach((c,j)=>{
       let d=fmt(c,t.v[c.k]),ix=6;const nu=['num','dur'].includes(c.type);
       if(c.k==='Name'){ix=6+(t.lvl-1)*16;if(sm)d=(collapsed.has(t.uid)?'▶ ':'▼ ')+d;else ix+=14}
       tx+=cell(xs[j],ry,c.w-2,RH,`<text x="${nu?c.w-8:ix}" y="17"${nu?' text-anchor="end"':''}${sm?' font-weight="600"':''} fill="${/^_(ns|nf|nd|dl)$/.test(c.k)?'#1f6f6b':'#1d2b2a'}">${esc(d)}</text>`)});
-    if(t.ms){if(show)bars+=dia(x(t.s),ry+6,4,'#aab4b2');bars+=dia(x(t.ns),ry+17,5.5,'#d9791c')}
+    if(t.ms){if(show)bars+=dia(x(t.s),ry+6,4,'#aab4b2');bars+=dia(x(t.ns),ry+17,5.5,clc(t)||'#d9791c')}
     else{
       if(show)bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(2,(t.f-t.s)/DAY*ppd)}" height="6" rx="3" fill="#aab4b2"/>`;
-      bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(2,(t.nf-t.ns)/DAY*ppd)}" height="${sm?8:11}" rx="${sm?0:3}" fill="${sm?'#0f3f3d':'#1f6f6b'}"/>`;
+      bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(2,(t.nf-t.ns)/DAY*ppd)}" height="${sm?8:11}" rx="${sm?0:3}" fill="${clc(t)||(sm?'#0f3f3d':'#1f6f6b')}"/>`;
     }
   });
-  const lk=$('showL').checked?linkPaths(rs,x,y0).map(d=>`<path d="${d}" fill="none" stroke="#6b7a78" stroke-width="1" marker-end="url(#ar)"/>`).join(''):'';
+  rs.forEach((t,i)=>{const lt=detailText(t);if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
+  const now=Date.now();if($('showT').checked&&now>=t0&&now<=t1)bars+=`<line x1="${x(now)}" y1="${TOP}" x2="${x(now)}" y2="${H}" stroke="#d33a2c" stroke-dasharray="4 3"/>`;
+  const lk=$('showL').checked?linkPaths(rs,x,y0).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'#8a4bd8':c==='cr'?'#d33a2c':'#6b7a78'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join(''):'';
   const defs='<defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="#6b7a78"/></marker></defs>';
   return{s:defs+top+bg+grid+tx+bars+lk,W,H};
 }
@@ -414,6 +471,13 @@ $('bf').onclick=()=>{sort=null;filt={};if(doc){buildHead();render()}};
 let busy=0;[['L','R'],['R','L']].forEach(([a,b])=>$(a).addEventListener('scroll',()=>{
   if(busy){busy=0;return}if($(b).scrollTop!==$(a).scrollTop){busy=1;$(b).scrollTop=$(a).scrollTop}}));
 
+$('vpan').addEventListener('change',e=>{if(e.target.dataset.d)render()});
+const pick=e=>{
+  if(e.target.closest('[data-m],.tg'))return;
+  const r=e.target.closest('[data-u]');if(!r)return;
+  selUid=selUid===r.dataset.u?null:r.dataset.u;render();
+};
+$('L').addEventListener('click',pick);$('R').addEventListener('click',pick);
 let lastW=0;new ResizeObserver(()=>{const w=$('R').clientWidth;if(doc&&Math.abs(w-lastW)>1){lastW=w;render()}}).observe($('R'));
 addEventListener('resize',()=>doc&&render());
 async function load(f){
@@ -426,7 +490,7 @@ async function load(f){
   }catch(e){err(e.message)}
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
-['k','mode','zoom','showO','showL'].forEach(i=>$(i).oninput=render);
+['k','mode','zoom','showO','showL','showC','showT','pm'].forEach(i=>$(i).oninput=render);
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>
