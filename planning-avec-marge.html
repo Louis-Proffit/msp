@@ -47,7 +47,7 @@ td.nu{text-align:right}td.mg{color:var(--nw)}
 .menu .bt{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
 .gh{position:sticky;top:0;z-index:3;height:52px;background:var(--hd);border-bottom:1px solid var(--ln)}
 .mo{position:absolute;border-left:1px solid var(--ln);padding:3px 5px;color:var(--mu);font-size:12px;white-space:nowrap;height:100%}
-.mo b{position:absolute;top:0;left:5px;color:var(--tx)}.mo span{position:absolute;top:26px}
+.mo b{position:absolute;top:0;left:5px;color:var(--tx)}.mo span{position:absolute;top:20px}.dy{position:absolute;top:37px;font-size:10px;color:var(--mu);text-align:center}.dy.we{opacity:.5}
 .gr{position:relative;height:26px;border-bottom:1px solid var(--ln)}
 .o,.n,.m{position:absolute;display:block}
 .o{background:var(--or);height:6px;top:3px;opacity:.8;border-radius:3px}
@@ -63,7 +63,7 @@ td.nu{text-align:right}td.mg{color:var(--nw)}
 <button class="p" onclick="file.click()">Ouvrir</button>
 <label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label>
 <label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label>
-<label>Zoom <input type="range" id="zoom" min="2" max="30" value="8"></label>
+<label>Zoom <input type="range" id="zoom" min="0" max="100" value="0" style="width:140px"> <span id="zl" style="min-width:70px"></span></label>
 <label><input type="checkbox" id="showO" checked> Planning initial</label>
 <label><input type="checkbox" id="showL" checked> Liens</label>
 <span id="lv"></span>
@@ -141,6 +141,11 @@ function parse(txt){
     cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
 }
 
+function getPPD(){
+  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+  const mx=48,mn=Math.min(mx,Math.max(0.02,($('R').clientWidth-90)/Math.max(1,(t1-t0)/DAY)));
+  return mn*Math.pow(mx/mn,(+$('zoom').value)/100);
+}
 function compute(k,mode){
   tasks.forEach(t=>{t.ns=t.nf=null;t.busy=0});
   const P0=Math.min(...tasks.map(t=>+t.s)),leaves=tasks.filter(t=>!t.kids.length&&!t.sum);
@@ -232,7 +237,7 @@ function buildHead(){
 function render(){
   if(!doc)return;
   const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);
-  const vc=vcols(),rs=rows(),ppd=+$('zoom').value,showO=$('showO').checked;
+  const vc=vcols(),rs=rows(),ppd=getPPD(),showO=$('showO').checked;$('zl').textContent=+$('zoom').value===0?'Tout':'1 j = '+(ppd<10?ppd.toFixed(1):Math.round(ppd))+' px';
   $('tb').innerHTML=rs.map(t=>`<tr class="${t.kids.length?'sm':''}">`+vc.map(c=>{
     const d=esc(fmt(c,t.v[c.k]));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(t.lvl-1)*16}px"`;
@@ -244,7 +249,8 @@ function render(){
   $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
-  for(;+c<=t1;c.setMonth(c.getMonth()+1))h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${c.toLocaleDateString('fr-FR',{month:'short'})}</span></div>`;
+  for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
+  if(ppd>=18)for(const d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);h+=`<span class="dy${d.getDay()%6?'':' we'}" style="left:${x(d)}px;width:${ppd}px">${d.getDate()}</span>`}
   h+='</div>';
   rs.forEach(t=>{
     const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
@@ -252,7 +258,7 @@ function render(){
     if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n" style="left:${x(t.ns)-5}px"></i>`}
     else{if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
       b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
-    h+=`<div class="gr${t.kids.length?' sm':''}" title="${esc(tip)}" style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%">${b}</div>`;
+    h+=`<div class="gr${t.kids.length?' sm':''}" title="${esc(tip)}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}</div>`;
   });
   const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(d=>`<path d="${d}" fill="none" stroke="currentColor" stroke-width="1" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
   $('R').innerHTML=h+lk+'</div>';
@@ -335,7 +341,7 @@ function linkPaths(rs,x,y0){
 
 /* ---- Export HTML / PDF : image fidèle de la vue courante ---- */
 function buildSVG(){
-  const vc=vcols(),rs=rows(),ppd=+$('zoom').value,show=$('showO').checked,k=+$('k').value||1;
+  const vc=vcols(),rs=rows(),ppd=getPPD(),show=$('showO').checked,k=+$('k').value||1;
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60;
   const y0=TOP+HH,H=y0+rs.length*RH+4,x=d=>GX+(d-t0)/DAY*ppd+8;
@@ -349,10 +355,11 @@ function buildSVG(){
     cx+=c.w;grid+=`<line x1="${cx}" y1="${TOP}" x2="${cx}" y2="${H}" stroke="#dfe4e0"/>`});
   grid+=`<line x1="${GX}" y1="${TOP}" x2="${GX}" y2="${H}" stroke="#aab4b2" stroke-width="2"/>`;
   const m=new Date(t0);m.setDate(1);const first=+m;
-  for(;+m<=t1;m.setMonth(m.getMonth()+1)){const mx=x(m);
+  for(;+m<=t1;m.setMonth(m.getMonth()+1)){const mx=x(m);if(ppd<1&&m.getMonth()!==0&&+m!==first)continue;
     grid+=`<line x1="${mx}" y1="${TOP}" x2="${mx}" y2="${H}" stroke="#e6ebe8"/>`+
       (m.getMonth()===0||+m===first?`<text x="${mx+4}" y="${TOP+14}" font-weight="700" fill="#1d2b2a">${m.getFullYear()}</text>`:'')+
-      `<text x="${mx+4}" y="${TOP+32}" font-size="11" fill="#6b7a78">${m.toLocaleDateString('fr-FR',{month:'short'})}</text>`}
+      (ppd>=1?`<text x="${mx+4}" y="${TOP+26}" font-size="11" fill="#6b7a78">${m.toLocaleDateString('fr-FR',{month:'short'})}</text>`:'')}
+  if(ppd>=18)for(const d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);tx+=`<text x="${x(d)+ppd/2}" y="${TOP+37}" font-size="9" text-anchor="middle" fill="#6b7a78"${d.getDay()%6?'':' opacity=".5"'}>${d.getDate()}</text>`}
   rs.forEach((t,i)=>{
     const ry=y0+i*RH,sm=t.kids.length>0;
     if(sm)bg+=`<rect y="${ry}" width="${GX}" height="${RH}" fill="#f1f5f3"/>`;
@@ -407,6 +414,8 @@ $('bf').onclick=()=>{sort=null;filt={};if(doc){buildHead();render()}};
 let busy=0;[['L','R'],['R','L']].forEach(([a,b])=>$(a).addEventListener('scroll',()=>{
   if(busy){busy=0;return}if($(b).scrollTop!==$(a).scrollTop){busy=1;$(b).scrollTop=$(a).scrollTop}}));
 
+let lastW=0;new ResizeObserver(()=>{const w=$('R').clientWidth;if(doc&&Math.abs(w-lastW)>1){lastW=w;render()}}).observe($('R'));
+addEventListener('resize',()=>doc&&render());
 async function load(f){
   err('');fname=f.name.replace(/\.[^.]+$/,'');
   try{
