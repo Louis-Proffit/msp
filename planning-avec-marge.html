@@ -5,89 +5,127 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Planning avec marge</title>
 <style>
-:root{--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#1f6f6b;--su:#0f3f3d;--ms:#d9791c;--ac:#1f6f6b}
-@media (prefers-color-scheme:dark){:root{--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#4fc1b9;--su:#2f8f89;--ms:#f09a45;--ac:#4fc1b9}}
+:root{--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#1f6f6b;--su:#0f3f3d;--ms:#d9791c;--ac:#1f6f6b;--hd:#eef1ee}
+@media (prefers-color-scheme:dark){:root{--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#4fc1b9;--su:#2f8f89;--ms:#f09a45;--ac:#4fc1b9;--hd:#212b28}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
-header{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:12px 16px;background:var(--pn);border-bottom:1px solid var(--ln)}
-h1{font-size:17px;margin:0 8px 0 0;font-weight:600}
-label{display:flex;gap:6px;align-items:center;color:var(--mu)}
-input,select,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:5px 9px}
-input[type=number]{width:70px}
-button{cursor:pointer}button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 12px;background:var(--pn);border-bottom:1px solid var(--ln)}
+h1{font-size:16px;margin:0 6px 0 0;font-weight:600}
+label{display:flex;gap:5px;align-items:center;color:var(--mu)}
+input,select,button,summary{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:5px;padding:4px 8px}
+input[type=number]{width:64px}input[type=checkbox],input[type=range]{padding:0}
+button,summary{cursor:pointer}button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
 button:disabled{opacity:.4;cursor:default}
-#stats{display:flex;gap:24px;padding:8px 16px;background:var(--pn);border-bottom:1px solid var(--ln);min-height:42px;align-items:center}
-#stats b{font-size:15px}#stats span{color:var(--mu)}
-#msg{padding:8px 16px;color:#b3261e;display:none}
-#view{flex:1;overflow:auto;position:relative}
-#empty{margin:12% auto;max-width:460px;text-align:center;color:var(--mu);border:2px dashed var(--ln);border-radius:12px;padding:36px}
-.hd,.row{display:flex;height:26px;width:max-content;min-width:100%}
-.hd{position:sticky;top:0;z-index:3;background:var(--pn);border-bottom:1px solid var(--ln)}
-.nm{position:sticky;left:0;z-index:2;width:320px;flex:none;background:var(--pn);border-right:1px solid var(--ln);padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hd .nm{z-index:4;color:var(--mu)}
-.row:hover .nm,.row:hover .ch{background-color:color-mix(in srgb,var(--ac) 8%,var(--pn))}
-.sum .nm{font-weight:600}
-.ch{position:relative;flex:none;border-bottom:1px solid var(--ln);background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px)}
-.hd .ch{background-image:none}
-.mo{position:absolute;top:0;height:100%;border-left:1px solid var(--ln);padding:4px 5px;color:var(--mu);font-size:12px;white-space:nowrap}
-.o,.n{position:absolute;border-radius:3px;display:block}
-.o{background:var(--or);height:6px;top:3px;opacity:.8}
-.n{background:var(--nw);height:11px;top:11px}
-.sum .n{background:var(--su);height:8px;top:12px;border-radius:0}
-.m{position:absolute;width:11px;height:11px;transform:rotate(45deg);background:var(--ms)}
-.m.o{background:var(--or);top:2px;height:8px;width:8px;border-radius:0}
-.m.n{background:var(--ms);top:12px;height:11px;width:11px;border-radius:0}
+details{position:relative}summary{list-style:none}
+.pan{position:absolute;top:110%;left:0;z-index:20;background:var(--pn);border:1px solid var(--ln);border-radius:6px;padding:8px;max-height:60vh;overflow:auto;width:290px;box-shadow:0 6px 20px #0003}
+.pan label{color:var(--tx);padding:1px 0}.pan div.b{display:flex;gap:6px;margin-bottom:6px}
+#stats{display:flex;flex-wrap:wrap;gap:4px 22px;padding:6px 12px;background:var(--pn);border-bottom:1px solid var(--ln);color:var(--mu)}
+#stats b{color:var(--tx)}
+#msg{padding:6px 12px;color:#b3261e;display:none}
+#main{flex:1;display:flex;min-height:0}
+#L{resize:horizontal;overflow:auto;width:60%;min-width:220px;max-width:92%;border-right:3px solid var(--ln)}
+#R{flex:1;overflow:auto;min-width:120px}
+#empty{margin:10% auto;max-width:460px;text-align:center;color:var(--mu);border:2px dashed var(--ln);border-radius:12px;padding:36px}
+table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+th{position:sticky;z-index:2;background:var(--hd);height:26px;padding:0 6px;text-align:left;font-weight:600;border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tr:first-child>th{top:0;cursor:pointer;user-select:none}tr.f>th{top:26px;padding:2px;font-weight:400}
+tr.f input{width:100%;padding:1px 4px;font-size:12px}
+th em{font-style:normal;color:var(--ac);margin-left:4px}
+td{height:26px;padding:0 6px;border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+tr:hover>td,.gr:hover{background-color:color-mix(in srgb,var(--ac) 9%,var(--pn))}
+tr.sm td{font-weight:600;background-color:color-mix(in srgb,var(--ac) 5%,var(--pn))}
+td.nu{text-align:right}td.mg{color:var(--nw)}
+.gh{position:sticky;top:0;z-index:3;height:52px;background:var(--hd);border-bottom:1px solid var(--ln)}
+.mo{position:absolute;border-left:1px solid var(--ln);padding:3px 5px;color:var(--mu);font-size:12px;white-space:nowrap;height:100%}
+.mo b{position:absolute;top:0;left:5px;color:var(--tx)}.mo span{position:absolute;top:26px}
+.gr{position:relative;height:26px;border-bottom:1px solid var(--ln)}
+.o,.n,.m{position:absolute;display:block}
+.o{background:var(--or);height:6px;top:3px;opacity:.8;border-radius:3px}
+.n{background:var(--nw);height:11px;top:11px;border-radius:3px}
+.sm.gr .n{background:var(--su);height:8px;top:12px;border-radius:0}
+.m{transform:rotate(45deg)}.m.o{background:var(--or);top:2px;width:8px;height:8px;border-radius:0}.m.n{background:var(--ms);top:12px;width:11px;height:11px;border-radius:0}
 </style>
 </head>
 <body>
 <header>
 <h1>Planning avec marge</h1>
 <input type="file" id="file" accept=".xml,.mpp" hidden>
-<button class="p" onclick="file.click()">Ouvrir un fichier</button>
+<button class="p" onclick="file.click()">Ouvrir</button>
 <label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label>
 <label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label>
 <label>Zoom <input type="range" id="zoom" min="2" max="30" value="8"></label>
 <label><input type="checkbox" id="showO" checked> Planning initial</label>
-<button id="bx" disabled>Exporter XML</button>
-<button id="bc" disabled>Exporter CSV</button>
+<label><input type="checkbox" id="hideS"> Masquer récapitulatives</label>
+<details id="dd"><summary>Colonnes ▾</summary><div class="pan" id="pan"></div></details>
+<button id="bf">Effacer filtres/tris</button>
+<button id="bx" disabled>Export XML</button>
+<button id="bc" disabled>Export CSV</button>
 </header>
 <div id="stats"><span>Aucun fichier chargé</span></div>
 <div id="msg"></div>
-<div id="view"><div id="empty">Glissez ici votre planning exporté depuis MS Project au format <b>XML</b><br><small>(Fichier › Enregistrer sous › type « Fichier XML »)</small></div></div>
+<div id="main"><div id="L"><div id="empty">Glissez ici votre planning exporté de MS Project au format <b>XML</b><br><small>(Fichier › Enregistrer sous › « Fichier XML »)</small></div></div><div id="R"></div></div>
 <script>
 const $=id=>document.getElementById(id),DAY=864e5,p2=n=>String(n).padStart(2,'0');
-let doc=null,tasks=[],byUid={},fname='planning';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
 const fd=d=>d.toLocaleDateString('fr-FR');
 const kids=(e,t)=>[...e.children].filter(c=>c.localName===t);
 const g=(e,t)=>{const n=kids(e,t)[0];return n?n.textContent:null};
-function err(m){$('msg').textContent=m;$('msg').style.display=m?'block':'none'}
+const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',Notes:'Notes',Summary:'Récapitulative',Milestone:'Jalon',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)'};
+const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
+const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
+const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
+let doc,tasks=[],byUid={},cols=[],vis=new Set(),sorts=[],filt={},fname='planning';
+const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
+function detect(k){
+  const vs=tasks.map(t=>t.v[k]).filter(x=>x!==undefined&&x!=='');
+  if(BOOL.has(k))return'bool';if(k==='_nd')return'dur';if(!vs.length)return'txt';
+  if(vs.every(v=>/^\d{4}-\d\d-\d\dT/.test(v)))return'date';
+  if(vs.every(v=>/^PT\d+H\d+M/.test(v)))return'dur';
+  if(vs.every(v=>!isNaN(v)))return'num';
+  return'txt';
+}
 function parse(txt){
   const x=new DOMParser().parseFromString(txt,'text/xml');
   if(x.querySelector('parsererror'))throw Error("Ce fichier n'est pas un XML valide.");
   const root=x.getElementsByTagNameNS('*','Tasks')[0];
   if(!root)throw Error("Aucune tâche trouvée : ce n'est pas un export XML de MS Project.");
-  doc=x;tasks=[];byUid={};
+  const all=n=>[...x.getElementsByTagNameNS('*',n)];
+  const rn={};all('Resource').forEach(r=>rn[g(r,'UID')]=g(r,'Name'));
+  const asg={};all('Assignment').forEach(a=>{const r=rn[g(a,'ResourceUID')];if(r)(asg[g(a,'TaskUID')]??=[]).push(r)});
+  const ea={};all('ExtendedAttribute').filter(e=>e.parentNode.localName==='ExtendedAttributes').forEach(e=>ea[g(e,'FieldID')]=g(e,'Alias')||g(e,'FieldName'));
+  doc=x;tasks=[];byUid={};const keys=[];
   kids(root,'Task').forEach(e=>{
-    const uid=g(e,'UID'),s=g(e,'Start'),f=g(e,'Finish');
-    if(uid==='0'||!s||!f||g(e,'Name')===null)return;
-    const t={uid,el:e,name:g(e,'Name'),lvl:+g(e,'OutlineLevel')||1,sum:g(e,'Summary')==='1',
-      ms:g(e,'Milestone')==='1',s:new Date(s),f:new Date(f),
+    const uid=g(e,'UID'),v={};
+    if(uid==='0'||!g(e,'Start'))return;
+    [...e.children].forEach(c=>{if(!c.children.length)v[c.localName]=c.textContent});
+    kids(e,'ExtendedAttribute').forEach(a=>{const id=g(a,'FieldID');v['EA'+id]=g(a,'Value');LAB['EA'+id]=ea[id]||'Champ '+id});
+    v._res=(asg[uid]||[]).join(', ');
+    const t={uid,el:e,v,lvl:+v.OutlineLevel||1,sum:v.Summary==='1',ms:v.Milestone==='1',s:new Date(v.Start),f:new Date(v.Finish),
       preds:kids(e,'PredecessorLink').map(l=>({uid:g(l,'PredecessorUID'),type:+g(l,'Type'),lag:(+g(l,'LinkLag')||0)/10*60000}))};
     if(t.ms)t.f=t.s;
     tasks.push(t);byUid[uid]=t;
+    Object.keys(v).forEach(k=>keys.includes(k)||keys.push(k));
   });
   if(!tasks.length)throw Error('Aucune tâche exploitable.');
+  tasks.forEach(t=>t.v._pred=t.preds.map(p=>{const q=byUid[p.uid],l=p.lag/60000/60/8;
+    return(q?q.v.ID:p.uid)+['FF','FD','DF','DD'][p.type]+(l?(l>0?'+':'')+Math.round(l*10)/10+'j':'')}).join(', '));
+  ['_ns','_nf','_nd','_dl'].forEach(k=>keys.push(k));if(!keys.includes('_pred'))keys.push('_pred');
+  const order=[...PRIO.filter(k=>keys.includes(k)||k==='_pred'||k==='_res'),...keys.filter(k=>!PRIO.includes(k))];
+  tasks.forEach(t=>{t.v._ns=t.v._nf=t.v._nd=t.v._dl=''});
+  cols=order.map(k=>{const type=detect(k);return{k,type,label:LAB[k]||k,unit:/Work/.test(k)?'h':'j',
+    w:k==='Name'?260:k==='Notes'?200:type==='date'?100:/^_(pred|res)$/.test(k)?140:100}});
+  vis=new Set(PRIO.filter(k=>order.includes(k)));sorts=[];filt={};
+  $('pan').innerHTML='<div class="b"><button onclick="setVis(1)">Toutes</button><button onclick="setVis(0)">Par défaut</button></div>'+
+    cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
 }
 
 function compute(k,mode){
   tasks.forEach(t=>{t.ns=t.nf=null;t.busy=0});
-  const P0=Math.min(...tasks.map(t=>+t.s));
-  const leaves=tasks.filter(t=>!t.sum);
-  if(mode==='prop'){
-    leaves.forEach(t=>{t.ns=new Date(P0+(t.s-P0)*k);t.nf=new Date(+t.ns+(t.f-t.s)*k)});
-  }else{
+  const P0=Math.min(...tasks.map(t=>+t.s)),leaves=tasks.filter(t=>!t.sum);
+  if(mode==='prop')leaves.forEach(t=>{t.ns=new Date(P0+(t.s-P0)*k);t.nf=new Date(+t.ns+(t.f-t.s)*k)});
+  else{
     const sched=t=>{
       if(t.ns||t.busy)return;t.busy=1;
       const d=(t.f-t.s)*k;let s=+t.s;
@@ -104,77 +142,139 @@ function compute(k,mode){
   for(let i=tasks.length-1;i>=0;i--){
     const t=tasks[i];if(!t.sum)continue;
     let a=Infinity,b=-Infinity;
-    for(let j=i+1;j<tasks.length&&tasks[j].lvl>t.lvl;j++){
-      const c=tasks[j];if(!c.ns)continue;
-      a=Math.min(a,+c.ns);b=Math.max(b,+c.nf);
-    }
+    for(let j=i+1;j<tasks.length&&tasks[j].lvl>t.lvl;j++){const c=tasks[j];if(c.ns){a=Math.min(a,+c.ns);b=Math.max(b,+c.nf)}}
     t.ns=new Date(isFinite(a)?a:+t.s);t.nf=new Date(isFinite(b)?b:+t.f);
   }
+  tasks.forEach(t=>{
+    t.v._ns=iso(t.ns);t.v._nf=iso(t.nf);t.v._dl=String((t.nf-t.f)/DAY);
+    const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');
+    t.v._nd=m&&!t.sum?String((+m[1]+m[2]/60)*k):'';
+  });
 }
 
+function fmt(c,r){
+  if(r===undefined||r==='')return'';
+  switch(c.type){
+    case'date':return fd(new Date(r));
+    case'dur':{const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);
+      return c.unit==='j'?Math.round(h/8*10)/10+' j':Math.round(h*10)/10+' h'}
+    case'bool':return r==='1'?'Oui':'Non';
+    case'num':return c.k==='_dl'?(+r).toFixed(1):c.k==='ConstraintType'?(CT[r]||r):c.k==='PercentComplete'?r+' %':r;
+  }
+  return r;
+}
+function val(t,c){
+  const r=t.v[c.k];if(r===undefined||r==='')return null;
+  if(c.type==='date')return+new Date(r);
+  if(c.type==='num')return parseFloat(r);
+  if(c.type==='dur'){const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);return c.unit==='j'?h/8:h}
+  return fmt(c,r).toLowerCase();
+}
+function parseUser(c,s){
+  s=s.trim();let m=/^(\d\d)\/(\d\d)\/(\d{4})$/.exec(s);
+  if(c.type==='date')return+new Date(m?`${m[3]}-${m[2]}-${m[1]}`:s);
+  return parseFloat(s.replace(',','.'));
+}
+function pass(t){
+  for(const c of cols){
+    const f=(filt[c.k]||'').trim();if(!f)continue;
+    const o=/^(>=|<=|>|<|=)\s*(.+)$/.exec(f);
+    if(o&&['num','dur','date'].includes(c.type)){
+      const a=val(t,c),b=parseUser(c,o[2]);if(a===null||isNaN(b))return false;
+      if(!{'>':a>b,'<':a<b,'>=':a>=b,'<=':a<=b,'=':a===b}[o[1]])return false;
+    }else if(!String(fmt(c,t.v[c.k])).toLowerCase().includes(f.toLowerCase()))return false;
+  }
+  return true;
+}
+function rows(){
+  let r=tasks.filter(t=>pass(t)&&!($('hideS').checked&&t.sum));
+  if(sorts.length)r=[...r].sort((a,b)=>{
+    for(const s of sorts){
+      const c=cols.find(c=>c.k===s.k),x=val(a,c),y=val(b,c);
+      if(x===y)continue;if(x===null)return 1;if(y===null)return-1;
+      const d=typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'fr',{numeric:true});
+      if(d)return d*s.d;
+    }return 0});
+  return r;
+}
+const vcols=()=>cols.filter(c=>vis.has(c.k));
+function buildHead(){
+  const vc=vcols();
+  $('L').innerHTML=`<table style="width:${vc.reduce((a,c)=>a+c.w,0)}px"><colgroup>${vc.map(c=>`<col style="width:${c.w}px">`).join('')}</colgroup><thead><tr>`+
+    vc.map(c=>{const i=sorts.findIndex(s=>s.k===c.k);return`<th data-k="${c.k}" title="${esc(c.label)} (clic : trier, Maj+clic : tri multiple)">${esc(c.label)}<em>${i<0?'':(sorts[i].d>0?'▲':'▼')+(sorts.length>1?i+1:'')}</em></th>`}).join('')+
+    '</tr><tr class="f">'+vc.map(c=>`<th><input data-f="${c.k}" value="${esc(filt[c.k]||'')}" placeholder="${['num','dur','date'].includes(c.type)?'> 5, = 3…':'filtrer'}"></th>`).join('')+
+    '</tr></thead><tbody id="tb"></tbody></table>';
+}
 function render(){
   if(!doc)return;
-  const k=Math.max(0.1,+$('k').value||1);
-  compute(k,$('mode').value);
-  const ppd=+$('zoom').value,showO=$('showO').checked;
+  const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);
+  const vc=vcols(),rs=rows(),ppd=+$('zoom').value,showO=$('showO').checked,noSort=!sorts.length;
+  $('tb').innerHTML=rs.map(t=>`<tr class="${t.sum?'sm':''}">`+vc.map(c=>{
+    const d=esc(fmt(c,t.v[c.k])),pad=c.k==='Name'&&noSort?` style="padding-left:${6+(t.lvl-1)*14}px"`:'';
+    return`<td class="${['num','dur'].includes(c.type)?'nu':''}${c.k[0]==='_'&&c.k.length===3||c.k==='_nd'||c.k==='_dl'?' mg':''}" title="${d}"${pad}>${d}</td>`}).join('')+'</tr>').join('');
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60;
-  const oEnd=Math.max(...tasks.map(t=>+t.f)),nEnd=Math.max(...tasks.map(t=>+t.nf));
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oEnd))}</b></span><span>Fin avec marge <b>${fd(new Date(nEnd))}</b></span><span>Décalage <b>+${Math.round((nEnd-oEnd)/DAY)} j</b></span><span>${tasks.length} tâches · ×${k}</span>`;
-  let h=`<div class="hd"><div class="nm">Tâche</div><div class="ch" style="width:${W}px">`;
+  const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} tâches affichées · ×${k}</span>`;
+  let h=`<div style="width:${W}px"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);
-  for(;+c<=t1;c.setMonth(c.getMonth()+1))h+=`<div class="mo" style="left:${x(c)}px">${c.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})}</div>`;
-  h+='</div></div>';
-  tasks.forEach(t=>{
-    const tip=`${t.name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
+  for(;+c<=t1;c.setMonth(c.getMonth()+1))h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===+new Date(new Date(t0).setDate(1))?`<b>${c.getFullYear()}</b>`:''}<span>${c.toLocaleDateString('fr-FR',{month:'short'})}</span></div>`;
+  h+='</div>';
+  rs.forEach(t=>{
+    const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
     let b='';
-    if(t.ms){
-      if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;
-      b+=`<i class="m n" style="left:${x(t.ns)-5}px"></i>`;
-    }else{
-      if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
-      b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`;
-    }
-    h+=`<div class="row${t.sum?' sum':''}" title="${tip.replace(/"/g,'&quot;')}"><div class="nm" style="padding-left:${8+(t.lvl-1)*14}px">${t.name.replace(/</g,'&lt;')}</div><div class="ch" style="width:${W}px;background-size:${7*ppd}px 100%">${b}</div></div>`;
+    if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n" style="left:${x(t.ns)-5}px"></i>`}
+    else{if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
+      b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
+    h+=`<div class="gr${t.sum?' sm':''}" title="${esc(tip)}" style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%">${b}</div>`;
   });
-  $('view').innerHTML=h;
+  $('R').innerHTML=h+'</div>';
   $('bx').disabled=$('bc').disabled=false;
 }
 
-function dl(name,txt,type){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click();
-}
+const dl=(n,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=n;a.click()};
 $('bc').onclick=()=>{
-  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
-  const rows=[['Tâche','Début initial','Fin initiale','Début avec marge','Fin avec marge'].map(q).join(';')];
-  tasks.forEach(t=>rows.push([q('  '.repeat(t.lvl-1)+t.name),fd(t.s),fd(t.f),fd(t.ns),fd(t.nf)].join(';')));
-  dl(fname+'-avec-marge.csv','\ufeff'+rows.join('\r\n'),'text/csv');
+  const vc=vcols(),q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  dl(fname+'-avec-marge.csv','\ufeff'+[vc.map(c=>q(c.label)).join(';'),...rows().map(t=>vc.map(c=>q(fmt(c,t.v[c.k]))).join(';'))].join('\r\n'),'text/csv');
 };
 $('bx').onclick=()=>{
   const k=+$('k').value||1;
   tasks.forEach(t=>{
     const set=(n,v)=>{const e=kids(t.el,n)[0];if(e)e.textContent=v};
     set('Start',iso(t.ns));set('Finish',iso(t.nf));
-    if(!t.sum&&!t.ms){
-      const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
-      if(m){const mins=Math.round((+m[1]*60+ +m[2])*k);set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`)}
-    }
+    if(!t.sum&&!t.ms){const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
+      if(m){const mins=Math.round((+m[1]*60+ +m[2])*k);set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`)}}
   });
   dl(fname+'-avec-marge.xml',new XMLSerializer().serializeToString(doc),'application/xml');
 };
+function setVis(all){vis=new Set(all?cols.map(c=>c.k):PRIO.filter(k=>cols.some(c=>c.k===k)));
+  $('pan').querySelectorAll('input').forEach(i=>i.checked=vis.has(i.dataset.c));buildHead();render()}
+
+$('L').addEventListener('click',e=>{
+  const th=e.target.closest('th[data-k]');if(!th)return;
+  const k=th.dataset.k,i=sorts.findIndex(s=>s.k===k),cur=i<0?0:sorts[i].d,nd=cur===0?1:cur===1?-1:0;
+  if(!e.shiftKey)sorts=sorts.filter(s=>s.k===k);
+  const j=sorts.findIndex(s=>s.k===k);
+  if(!nd&&j>=0)sorts.splice(j,1);else if(j>=0)sorts[j].d=nd;else sorts.push({k,d:nd});
+  buildHead();render();
+});
+$('L').addEventListener('input',e=>{if(e.target.dataset.f){filt[e.target.dataset.f]=e.target.value;render()}});
+$('pan').addEventListener('change',e=>{const k=e.target.dataset.c;if(!k)return;e.target.checked?vis.add(k):vis.delete(k);buildHead();render()});
+$('bf').onclick=()=>{sorts=[];filt={};if(doc){buildHead();render()}};
+let busy=0;[['L','R'],['R','L']].forEach(([a,b])=>$(a).addEventListener('scroll',()=>{
+  if(busy){busy=0;return}if($(b).scrollTop!==$(a).scrollTop){busy=1;$(b).scrollTop=$(a).scrollTop}}));
 
 async function load(f){
   err('');fname=f.name.replace(/\.[^.]+$/,'');
   try{
     const buf=await f.arrayBuffer(),h=new Uint8Array(buf.slice(0,4));
     if(h[0]===0xD0&&h[1]===0xCF&&h[2]===0x11&&h[3]===0xE0)
-      throw Error("Le format .mpp est un format binaire propriétaire que cette page ne peut pas lire. Dans MS Project : Fichier › Enregistrer sous › type « Fichier XML », puis ouvrez ce fichier ici.");
-    parse(new TextDecoder('utf-8').decode(buf));render();
+      throw Error("Le format .mpp est binaire et propriétaire : cette page ne peut pas le lire. Dans MS Project : Fichier › Enregistrer sous › « Fichier XML », puis ouvrez ce fichier ici.");
+    parse(new TextDecoder('utf-8').decode(buf));buildHead();render();
   }catch(e){err(e.message)}
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
-['k','mode','zoom','showO'].forEach(i=>$(i).oninput=render);
+['k','mode','zoom','showO','hideS'].forEach(i=>$(i).oninput=render);
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>
