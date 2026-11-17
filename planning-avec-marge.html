@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planning avec marge</title>
+<style>
+:root{--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#1f6f6b;--su:#0f3f3d;--ms:#d9791c;--ac:#1f6f6b}
+@media (prefers-color-scheme:dark){:root{--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#4fc1b9;--su:#2f8f89;--ms:#f09a45;--ac:#4fc1b9}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column;height:100vh}
+header{display:flex;flex-wrap:wrap;gap:14px 22px;align-items:center;padding:12px 16px;background:var(--pn);border-bottom:1px solid var(--ln)}
+h1{font-size:17px;margin:0 8px 0 0;font-weight:600}
+label{display:flex;gap:6px;align-items:center;color:var(--mu)}
+input,select,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:5px 9px}
+input[type=number]{width:70px}
+button{cursor:pointer}button.p{background:var(--ac);color:var(--bg);border-color:var(--ac);font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+#stats{display:flex;gap:24px;padding:8px 16px;background:var(--pn);border-bottom:1px solid var(--ln);min-height:42px;align-items:center}
+#stats b{font-size:15px}#stats span{color:var(--mu)}
+#msg{padding:8px 16px;color:#b3261e;display:none}
+#view{flex:1;overflow:auto;position:relative}
+#empty{margin:12% auto;max-width:460px;text-align:center;color:var(--mu);border:2px dashed var(--ln);border-radius:12px;padding:36px}
+.hd,.row{display:flex;height:26px;width:max-content;min-width:100%}
+.hd{position:sticky;top:0;z-index:3;background:var(--pn);border-bottom:1px solid var(--ln)}
+.nm{position:sticky;left:0;z-index:2;width:320px;flex:none;background:var(--pn);border-right:1px solid var(--ln);padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .nm{z-index:4;color:var(--mu)}
+.row:hover .nm,.row:hover .ch{background-color:color-mix(in srgb,var(--ac) 8%,var(--pn))}
+.sum .nm{font-weight:600}
+.ch{position:relative;flex:none;border-bottom:1px solid var(--ln);background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px)}
+.hd .ch{background-image:none}
+.mo{position:absolute;top:0;height:100%;border-left:1px solid var(--ln);padding:4px 5px;color:var(--mu);font-size:12px;white-space:nowrap}
+.o,.n{position:absolute;border-radius:3px;display:block}
+.o{background:var(--or);height:6px;top:3px;opacity:.8}
+.n{background:var(--nw);height:11px;top:11px}
+.sum .n{background:var(--su);height:8px;top:12px;border-radius:0}
+.m{position:absolute;width:11px;height:11px;transform:rotate(45deg);background:var(--ms)}
+.m.o{background:var(--or);top:2px;height:8px;width:8px;border-radius:0}
+.m.n{background:var(--ms);top:12px;height:11px;width:11px;border-radius:0}
+</style>
+</head>
+<body>
+<header>
+<h1>Planning avec marge</h1>
+<input type="file" id="file" accept=".xml,.mpp" hidden>
+<button class="p" onclick="file.click()">Ouvrir un fichier</button>
+<label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label>
+<label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label>
+<label>Zoom <input type="range" id="zoom" min="2" max="30" value="8"></label>
+<label><input type="checkbox" id="showO" checked> Planning initial</label>
+<button id="bx" disabled>Exporter XML</button>
+<button id="bc" disabled>Exporter CSV</button>
+</header>
+<div id="stats"><span>Aucun fichier chargé</span></div>
+<div id="msg"></div>
+<div id="view"><div id="empty">Glissez ici votre planning exporté depuis MS Project au format <b>XML</b><br><small>(Fichier › Enregistrer sous › type « Fichier XML »)</small></div></div>
+<script>
+const $=id=>document.getElementById(id),DAY=864e5,p2=n=>String(n).padStart(2,'0');
+let doc=null,tasks=[],byUid={},fname='planning';
+const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}`;
+const fd=d=>d.toLocaleDateString('fr-FR');
+const kids=(e,t)=>[...e.children].filter(c=>c.localName===t);
+const g=(e,t)=>{const n=kids(e,t)[0];return n?n.textContent:null};
+function err(m){$('msg').textContent=m;$('msg').style.display=m?'block':'none'}
+
+function parse(txt){
+  const x=new DOMParser().parseFromString(txt,'text/xml');
+  if(x.querySelector('parsererror'))throw Error("Ce fichier n'est pas un XML valide.");
+  const root=x.getElementsByTagNameNS('*','Tasks')[0];
+  if(!root)throw Error("Aucune tâche trouvée : ce n'est pas un export XML de MS Project.");
+  doc=x;tasks=[];byUid={};
+  kids(root,'Task').forEach(e=>{
+    const uid=g(e,'UID'),s=g(e,'Start'),f=g(e,'Finish');
+    if(uid==='0'||!s||!f||g(e,'Name')===null)return;
+    const t={uid,el:e,name:g(e,'Name'),lvl:+g(e,'OutlineLevel')||1,sum:g(e,'Summary')==='1',
+      ms:g(e,'Milestone')==='1',s:new Date(s),f:new Date(f),
+      preds:kids(e,'PredecessorLink').map(l=>({uid:g(l,'PredecessorUID'),type:+g(l,'Type'),lag:(+g(l,'LinkLag')||0)/10*60000}))};
+    if(t.ms)t.f=t.s;
+    tasks.push(t);byUid[uid]=t;
+  });
+  if(!tasks.length)throw Error('Aucune tâche exploitable.');
+}
+
+function compute(k,mode){
+  tasks.forEach(t=>{t.ns=t.nf=null;t.busy=0});
+  const P0=Math.min(...tasks.map(t=>+t.s));
+  const leaves=tasks.filter(t=>!t.sum);
+  if(mode==='prop'){
+    leaves.forEach(t=>{t.ns=new Date(P0+(t.s-P0)*k);t.nf=new Date(+t.ns+(t.f-t.s)*k)});
+  }else{
+    const sched=t=>{
+      if(t.ns||t.busy)return;t.busy=1;
+      const d=(t.f-t.s)*k;let s=+t.s;
+      for(const p of t.preds){
+        const q=byUid[p.uid];if(!q||q.sum)continue;
+        sched(q);if(!q.ns)continue;
+        const c=p.type===1?+q.nf+p.lag:p.type===3?+q.ns+p.lag:p.type===0?+q.nf+p.lag-d:+q.ns+p.lag-d;
+        if(c>s)s=c;
+      }
+      t.ns=new Date(s);t.nf=new Date(s+d);t.busy=0;
+    };
+    leaves.forEach(sched);
+  }
+  for(let i=tasks.length-1;i>=0;i--){
+    const t=tasks[i];if(!t.sum)continue;
+    let a=Infinity,b=-Infinity;
+    for(let j=i+1;j<tasks.length&&tasks[j].lvl>t.lvl;j++){
+      const c=tasks[j];if(!c.ns)continue;
+      a=Math.min(a,+c.ns);b=Math.max(b,+c.nf);
+    }
+    t.ns=new Date(isFinite(a)?a:+t.s);t.nf=new Date(isFinite(b)?b:+t.f);
+  }
+}
+
+function render(){
+  if(!doc)return;
+  const k=Math.max(0.1,+$('k').value||1);
+  compute(k,$('mode').value);
+  const ppd=+$('zoom').value,showO=$('showO').checked;
+  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+  const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60;
+  const oEnd=Math.max(...tasks.map(t=>+t.f)),nEnd=Math.max(...tasks.map(t=>+t.nf));
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oEnd))}</b></span><span>Fin avec marge <b>${fd(new Date(nEnd))}</b></span><span>Décalage <b>+${Math.round((nEnd-oEnd)/DAY)} j</b></span><span>${tasks.length} tâches · ×${k}</span>`;
+  let h=`<div class="hd"><div class="nm">Tâche</div><div class="ch" style="width:${W}px">`;
+  const c=new Date(t0);c.setDate(1);
+  for(;+c<=t1;c.setMonth(c.getMonth()+1))h+=`<div class="mo" style="left:${x(c)}px">${c.toLocaleDateString('fr-FR',{month:'short',year:'2-digit'})}</div>`;
+  h+='</div></div>';
+  tasks.forEach(t=>{
+    const tip=`${t.name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
+    let b='';
+    if(t.ms){
+      if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;
+      b+=`<i class="m n" style="left:${x(t.ns)-5}px"></i>`;
+    }else{
+      if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
+      b+=`<i class="n" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`;
+    }
+    h+=`<div class="row${t.sum?' sum':''}" title="${tip.replace(/"/g,'&quot;')}"><div class="nm" style="padding-left:${8+(t.lvl-1)*14}px">${t.name.replace(/</g,'&lt;')}</div><div class="ch" style="width:${W}px;background-size:${7*ppd}px 100%">${b}</div></div>`;
+  });
+  $('view').innerHTML=h;
+  $('bx').disabled=$('bc').disabled=false;
+}
+
+function dl(name,txt,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click();
+}
+$('bc').onclick=()=>{
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const rows=[['Tâche','Début initial','Fin initiale','Début avec marge','Fin avec marge'].map(q).join(';')];
+  tasks.forEach(t=>rows.push([q('  '.repeat(t.lvl-1)+t.name),fd(t.s),fd(t.f),fd(t.ns),fd(t.nf)].join(';')));
+  dl(fname+'-avec-marge.csv','\ufeff'+rows.join('\r\n'),'text/csv');
+};
+$('bx').onclick=()=>{
+  const k=+$('k').value||1;
+  tasks.forEach(t=>{
+    const set=(n,v)=>{const e=kids(t.el,n)[0];if(e)e.textContent=v};
+    set('Start',iso(t.ns));set('Finish',iso(t.nf));
+    if(!t.sum&&!t.ms){
+      const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
+      if(m){const mins=Math.round((+m[1]*60+ +m[2])*k);set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`)}
+    }
+  });
+  dl(fname+'-avec-marge.xml',new XMLSerializer().serializeToString(doc),'application/xml');
+};
+
+async function load(f){
+  err('');fname=f.name.replace(/\.[^.]+$/,'');
+  try{
+    const buf=await f.arrayBuffer(),h=new Uint8Array(buf.slice(0,4));
+    if(h[0]===0xD0&&h[1]===0xCF&&h[2]===0x11&&h[3]===0xE0)
+      throw Error("Le format .mpp est un format binaire propriétaire que cette page ne peut pas lire. Dans MS Project : Fichier › Enregistrer sous › type « Fichier XML », puis ouvrez ce fichier ici.");
+    parse(new TextDecoder('utf-8').decode(buf));render();
+  }catch(e){err(e.message)}
+}
+$('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
+['k','mode','zoom','showO'].forEach(i=>$(i).oninput=render);
+addEventListener('dragover',e=>e.preventDefault());
+addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
+</script>
+</body>
+</html>
