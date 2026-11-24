@@ -16,7 +16,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 |---|---|
 | **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML ou PDF |
 | **Tâche** | Boutons de niveaux hiérarchiques, **édition du planning** (ajouter/supprimer/monter/descendre/indenter/désindenter, Annuler/Rétablir), choix des colonnes visibles, effacement des filtres/tris |
-| **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), et **calendrier** : calcul en jours ouvrés avec choix du calendrier du projet |
+| **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), **calendrier** (jours ouvrés, choix du calendrier du projet) et **contraintes** (case « Appliquer les contraintes dans le calcul ») |
 | **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
 | **Format** | Chemin critique en rouge, chemin de la tâche sélectionnée (prédécesseurs/successeurs pilotants ou tous), texte affiché à droite des barres (nom, ID, durée, dates, % achevé, ressources, décalage de fin) |
 
@@ -63,6 +63,14 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - **Menu contextuel** : clic droit sur une ligne (tableau ou Gantt) → Ajouter / Supprimer / Monter / Descendre / Indenter / Désindenter / Annuler / Rétablir.
 - **Annuler / Rétablir** (boutons ↶ ↷ ou `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Maj+Z`) : historique de 100 états.
 - Les tâches récapitulatives ne sont pas éditables en durée/dates (elles englobent leurs filles), mais leur nom et leurs prédécesseurs le sont.
+
+## Contraintes et échéances
+
+- Case « **Appliquer les contraintes dans le calcul** » (onglet Projet, cochée par défaut). Les contraintes du fichier (`ConstraintType` / `ConstraintDate`) sont prises en compte dans le recalcul avec marge, en temps ouvré si le calendrier est actif :
+  - « Doit commencer le » (2) et « Début au plus tôt » (4) **bloquent le début** à la date de contrainte (marqueur orange dans le Gantt) ;
+  - « Doit finir le » (3), « Début au plus tard » (5), « Fin au plus tard » (7) et l'**échéance** (`Deadline`) ne déplacent pas la tâche mais déclenchent une **alerte** si la date calculée les dépasse : liseré orange/rouge sur la ligne, colonne « Alerte » (filtrable), marqueur d'échéance en pointillés rouges dans le Gantt, compteur « Alertes » dans la barre de statut.
+- Les champs `ConstraintType` (éditable aussi par son libellé, ex. « Doit finir le »), `ConstraintDate` et `Deadline` sont modifiables en double-clic comme toute colonne.
+- « Dès que possible » (0) et « Le plus tard possible » (1) n'ont pas d'effet sur le calcul avec marge (pas de planification à rebours).
 
 ## Calendrier et jours ouvrés
 
