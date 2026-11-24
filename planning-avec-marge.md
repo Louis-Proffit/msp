@@ -24,6 +24,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 
 - Colonnes issues des champs MS Project (ID, UID, Nom, WBS, Durée, Début, Fin, % achevé, ressources, prédécesseurs, attributs étendus, etc.) plus colonnes calculées : début/fin/durée avec marge et décalage de fin.
 - Tri et **filtres façon Excel** via le bouton ▾ de chaque en-tête (sélection de valeurs, recherche, conditions comparatives).
+- **Regrouper par** (liste « Regrouper » de l'onglet Tâche) : les lignes sont groupées sous des en-têtes de groupe (valeur + effectif), dans le tableau comme dans le Gantt, façon « Regrouper par » de MS Project. Par « Noms des ressources », une tâche affectée à plusieurs ressources apparaît dans chaque groupe. Le tri en cours s'applique à l'intérieur des groupes ; les filtres s'appliquent avant regroupement.
 - Clic sur une ligne pour sélectionner la tâche ; clic sur ▶/▼ pour replier/déplier la hiérarchie.
 
 ## Vue Gantt (droite)

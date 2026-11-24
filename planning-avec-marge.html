@@ -59,6 +59,8 @@ td[data-e]{cursor:text}td[data-e]:hover{box-shadow:inset 0 0 0 1px var(--mu)}
 .pg{background:var(--tx);opacity:.45;height:11px;top:11px;border-radius:3px}.sm.gr .pg{height:8px;top:12px;border-radius:0}
 .pgo{background:var(--tx);opacity:.3;height:6px;top:3px;border-radius:3px}
 tr.late>td:first-child{box-shadow:inset 3px 0 0 var(--cr)}.gr.late{box-shadow:inset 3px 0 0 var(--cr)}
+tr.grph td{background:var(--hd);font-weight:700}tr.grph em{color:var(--mu);font-weight:400}
+.grh{height:26px;border-bottom:1px solid var(--ln);background:var(--hd);font-weight:700;padding:4px 8px;font-size:12px;white-space:nowrap;overflow:hidden}.grh em{color:var(--mu);font-weight:400}
 .sel>td,.gr.sel{background-color:color-mix(in srgb,var(--pa) 16%,var(--pn))!important}
 .lb{position:absolute;top:6px;font-size:11px;color:var(--mu);white-space:nowrap;pointer-events:none}
 .pan h4{margin:8px 0 3px;font-size:12px;color:var(--mu)}.pan select{width:100%;margin-top:2px}
@@ -97,8 +99,8 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 <div class="bar" id="tab-t">
 <section class="g"><div class="row"><span id="lv"></span></div><h5>Hiérarchie</h5></section>
 <section class="g"><div class="row"><button class="big" id="bAdd" disabled><i>➕</i>Ajouter</button><button class="big" id="bDel" disabled><i>🗑️</i>Suppr.</button><button class="big" id="bUp" disabled><i>⬆️</i>Monter</button><button class="big" id="bDn" disabled><i>⬇️</i>Descendre</button><button class="big" id="bInd" disabled><i>↪️</i>Indenter</button><button class="big" id="bOut" disabled><i>↩️</i>Désind.</button><button class="big" id="bUn" disabled><i>↶</i>Annuler</button><button class="big" id="bRe" disabled><i>↷</i>Rétablir</button></div><h5>Édition</h5></section>
-<section class="g"><div class="row"><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
-<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. Clic sur une ligne : la sélectionner. Double-clic sur une cellule surlignée (nom, durée, dates, %, prédécesseurs « 1FD+2j ») : modifier. Suppr : supprimer la tâche. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
+<section class="g"><div class="row"><label>Regrouper <select id="grp"></select></label><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
+<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie (ex. Ressources — une tâche multi-ressources apparaît dans chaque groupe). Clic sur une ligne : la sélectionner. Double-clic sur une cellule surlignée : modifier. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
 </div>
 
 <div class="bar" id="tab-p" hidden>
@@ -133,7 +135,7 @@ const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineN
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
 const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
-let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1;
+let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null;
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
 /* ---- Calendriers : calcul en temps ouvré ---- */
@@ -255,6 +257,8 @@ function parse(txt){
   vis=new Set(PRIO.filter(k=>order.includes(k)));sort=null;filt={};
   $('pan').innerHTML='<div class="b"><button onclick="setVis(1)">Toutes</button><button onclick="setVis(0)">Par défaut</button></div>'+
     cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
+  $('grp').innerHTML='<option value="">Aucun</option>'+cols.map(c=>`<option value="${c.k}">${esc(c.label)}</option>`).join('');
+  grp=null;
   hist=[];saveHist();
 }
 
@@ -492,7 +496,19 @@ function rows(){
     if(sc)a=[...a].sort((x,y)=>{const x1=val(x,sc),y1=val(y,sc);return x1===null||y1===null?cmpv(x1,y1):cmpv(x1,y1)*sort.d});
     a.forEach(t=>{out.push(t);if(!collapsed.has(t.uid))walk(t.kids)});
   };
-  walk(roots);return out;
+  walk(roots);
+  if(!grp)return out;
+  const c=cols.find(c=>c.k===grp);if(!c)return out;
+  if(sc)out.sort((x,y)=>{const x1=val(x,sc),y1=val(y,sc);return x1===null||y1===null?cmpv(x1,y1):cmpv(x1,y1)*sort.d});
+  const groups=new Map(),add=(l,t)=>{if(!groups.has(l))groups.set(l,[]);groups.get(l).push(t)};
+  out.forEach(t=>{
+    if(grp==='_res'){const ls=(t.v._res||'').split(',').map(s=>s.trim()).filter(Boolean);
+      (ls.length?ls:['(Vides)']).forEach(l=>add(l,t))}
+    else add(fmt(c,t.v[c.k])||'(Vides)',t)});
+  const res=[];
+  [...groups.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'fr',{numeric:true}))
+    .forEach(([l,list])=>{res.push({hdr:l,n:list.length});res.push(...list)});
+  return res;
 }
 const vcols=()=>cols.filter(c=>vis.has(c.k));
 function buildHead(){
@@ -506,16 +522,18 @@ function render(){
   const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);computeCrit();computePath();
   const vc=vcols(),rs=rows(),ppd=getPPD(),showO=$('showO').checked;$('zl').textContent=+$('zoom').value===0?'Tout':'1 j = '+(ppd<10?ppd.toFixed(1):Math.round(ppd))+' px';
   const sd=sdDate(),late=t=>$('showP').checked&&t.pct<100&&+sd>+t.nf;
-  $('tb').innerHTML=rs.map(t=>`<tr data-u="${t.uid}" class="${t.kids.length?'sm':''}${t.uid===selUid?' sel':''}${late(t)?' late':''}">`+vc.map(c=>{
-    const d=c.k==='PercentComplete'&&t.kids.length?esc(Math.round(t.pct)+' %'):esc(fmt(c,t.v[c.k]));let inner=d,pad='';
-    if(c.k==='Name'){pad=` style="padding-left:${6+(t.lvl-1)*16}px"`;
-      inner=`<span class="tg"${t.kids.length?` data-u="${t.uid}"`:''}>${t.kids.length?(collapsed.has(t.uid)?'▶':'▼'):''}</span>`+d}
+  $('tb').innerHTML=rs.map(o=>o.hdr!==undefined
+    ?`<tr class="grph"><td colspan="${vc.length}">${esc(o.hdr)} <em>(${o.n})</em></td></tr>`
+    :`<tr data-u="${o.uid}" class="${o.kids.length?'sm':''}${o.uid===selUid?' sel':''}${late(o)?' late':''}">`+vc.map(c=>{
+    const d=c.k==='PercentComplete'&&o.kids.length?esc(Math.round(o.pct)+' %'):esc(fmt(c,o.v[c.k]));let inner=d,pad='';
+    if(c.k==='Name'){pad=` style="padding-left:${6+(o.lvl-1)*16}px"`;
+      inner=`<span class="tg"${o.kids.length?` data-u="${o.uid}"`:''}>${o.kids.length?(collapsed.has(o.uid)?'▶':'▼'):''}</span>`+d}
     return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl)$/.test(c.k)?' mg':''}" title="${d}${EDIT.has(c.k)?' — double-clic pour modifier':''}"${pad}${EDIT.has(c.k)?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
   const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE)),nLate=tasks.filter(t=>!t.kids.length&&t.pct<100&&+sd>+t.nf).length;
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.filter(o=>!o.hdr).length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
@@ -525,6 +543,7 @@ function render(){
     return s})();
   h+=shd+'</div>'+shd;
   rs.forEach(t=>{
+    if(t.hdr){h+=`<div class="grh">${esc(t.hdr)} <em>(${t.n})</em></div>`;return}
     const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
     let b='';const cc=clsOf(t);
     if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n${cc}" style="left:${x(t.ns)-5}px"></i>`}
@@ -538,7 +557,7 @@ function render(){
   const now=Date.now(),td=$('showT').checked&&now>=t0&&now<=t1?`<div style="position:absolute;left:${x(now)}px;top:0;bottom:0;border-left:1px dashed var(--cr);z-index:1;pointer-events:none"></div>`:'';
   const pl=(()=>{if(!$('showP').checked)return'';const s2=sdDate();if(+s2<t0||+s2>t1)return'';
     let s=`<div style="position:absolute;left:${x(s2)}px;top:0;bottom:0;border-left:1px dashed var(--ac);z-index:1;pointer-events:none"></div>`;
-    rs.forEach((t,j)=>{if(t.ms||t.kids.length||+t.ns>+s2||+s2>+t.nf)return;
+    rs.forEach((t,j)=>{if(t.hdr||t.ms||t.kids.length||+t.ns>+s2||+s2>+t.nf)return;
       const ex=useCal()?workDiff(calOf(t),t.ns,s2)/Math.max(1,workDiff(calOf(t),t.ns,t.nf)):(+s2-+t.ns)/Math.max(1,+t.nf-+t.ns);
       s+=`<i class="m" style="left:${x(s2)-4}px;top:${52+j*26+4}px;width:8px;height:8px;background:${t.pct+1<ex*100?'var(--cr)':'var(--ac)'}"></i>`});
     return s})();
@@ -615,14 +634,14 @@ $('lv').addEventListener('click',e=>{
 /* ---- Liens entre tâches ---- */
 function linkPaths(rs,x,y0){
   const idx=new Map(rs.map((t,i)=>[t.uid,i])),out=[];
-  rs.forEach((t,j)=>t.preds.forEach(p=>{
+  rs.forEach((t,j)=>{if(t.hdr)return;t.preds.forEach(p=>{
     const q=byUid[p.uid],i=q?idx.get(q.uid):undefined;if(i===undefined)return;
     const se=p.type<2,te=p.type%2===0;           /* 0 FF, 1 FD, 2 DF, 3 DD */
     const x1=x(se?q.nf:q.ns),x2=x(te?t.nf:t.ns),y1=y0+i*26+16,y2=y0+j*26+16;
     const xa=x1+(se?6:-6),xb=x2+(te?6:-6),ym=y2<y1?y1-13:y1+13;
     const d=p.type===1&&xa<=xb?`M${x1} ${y1}H${xa}V${y2}H${x2}`:`M${x1} ${y1}H${xa}V${ym}H${xb}V${y2}H${x2}`;
     out.push([d,pl.has(q.uid+'>'+t.uid)?'pa':($('showC').checked&&q.crit&&t.crit&&drv(q,t,p)?'cr':'')]);
-  }));
+  })});
   return out;
 }
 
@@ -649,7 +668,10 @@ function buildSVG(){
   if(useCal()&&ppd>=4){const c=effCal(defCalUid);for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);if(!dayStatus(c,d))grid+=`<rect x="${x(d)}" y="${TOP}" width="${Math.max(1,ppd)}" height="${H-TOP}" fill="#6b7a78" opacity=".14"/>`}}
   if(ppd>=18)for(const d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);tx+=`<text x="${x(d)+ppd/2}" y="${TOP+37}" font-size="9" text-anchor="middle" fill="#6b7a78"${d.getDay()%6?'':' opacity=".5"'}>${d.getDate()}</text>`}
   rs.forEach((t,i)=>{
-    const ry=y0+i*RH,sm=t.kids.length>0;
+    const ry=y0+i*RH;
+    if(t.hdr){bg+=`<rect y="${ry}" width="${GX}" height="${RH}" fill="#e6ecea"/><line x1="0" y1="${ry+RH}" x2="${W}" y2="${ry+RH}" stroke="#dfe4e0"/>`;
+      tx+=cell(0,ry,GX-2,RH,`<text x="6" y="17" font-weight="700" fill="#1d2b2a">${esc(t.hdr)} <tspan font-weight="400" fill="#6b7a78">(${t.n})</tspan></text>`);return}
+    const sm=t.kids.length>0;
     if(sm)bg+=`<rect y="${ry}" width="${GX}" height="${RH}" fill="#f1f5f3"/>`;
     if(t.uid===selUid)bg+=`<rect y="${ry}" width="${W}" height="${RH}" fill="#ece6f8"/>`;
     bg+=`<line x1="0" y1="${ry+RH}" x2="${W}" y2="${ry+RH}" stroke="#dfe4e0"/>`;
@@ -665,7 +687,7 @@ function buildSVG(){
         if(show){const w0=Math.max(2,(t.f-t.s)/DAY*ppd);bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(1,w0*t.pct/100)}" height="6" fill="#1d2b2a" opacity=".3"/>`}}
     }
   });
-  rs.forEach((t,i)=>{const lt=detailText(t);if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
+  rs.forEach((t,i)=>{if(t.hdr)return;const lt=detailText(t);if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
   const now=Date.now();if($('showT').checked&&now>=t0&&now<=t1)bars+=`<line x1="${x(now)}" y1="${TOP}" x2="${x(now)}" y2="${H}" stroke="#d33a2c" stroke-dasharray="4 3"/>`;
   if($('showP').checked){const s2=sdDate();if(+s2>=t0&&+s2<=t1)bars+=`<line x1="${x(s2)}" y1="${TOP}" x2="${x(s2)}" y2="${H}" stroke="#2b7a3d" stroke-dasharray="4 3"/>`}
   const lk=$('showL').checked?linkPaths(rs,x,y0).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'#8a4bd8':c==='cr'?'#d33a2c':'#6b7a78'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join(''):'';
@@ -705,6 +727,7 @@ function setVis(all){vis=new Set(all?cols.map(c=>c.k):PRIO.filter(k=>cols.some(c
   $('pan').querySelectorAll('input').forEach(i=>i.checked=vis.has(i.dataset.c));buildHead();render()}
 $('pan').addEventListener('change',e=>{const k=e.target.dataset.c;if(!k)return;e.target.checked?vis.add(k):vis.delete(k);buildHead();render()});
 $('bf').onclick=()=>{sort=null;filt={};if(doc){buildHead();render()}};
+$('grp').onchange=e=>{grp=e.target.value||null;render()};
 $('bAdd').onclick=()=>addTask();$('bDel').onclick=()=>delTask();
 $('bUp').onclick=()=>moveTask(-1);$('bDn').onclick=()=>moveTask(1);
 $('bInd').onclick=()=>indent();$('bOut').onclick=()=>outdent();
