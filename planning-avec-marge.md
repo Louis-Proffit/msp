@@ -17,7 +17,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 | **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML ou PDF |
 | **Tâche** | Boutons de niveaux hiérarchiques, **édition du planning** (ajouter/supprimer/monter/descendre/indenter/désindenter, Annuler/Rétablir), choix des colonnes visibles, effacement des filtres/tris |
 | **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), et **calendrier** : calcul en jours ouvrés avec choix du calendrier du projet |
-| **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui » |
+| **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
 | **Format** | Chemin critique en rouge, chemin de la tâche sélectionnée (prédécesseurs/successeurs pilotants ou tous), texte affiché à droite des barres (nom, ID, durée, dates, % achevé, ressources, décalage de fin) |
 
 ## Vue tableau (gauche)
@@ -39,6 +39,13 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 - En mode « Respecter les liens », les tâches sont recalculées dans l'ordre topologique : le début de chaque tâche est le maximum de son début initial et des fins (ou débuts) de ses prédécesseurs décalés du lag.
 - En mode « Homothétie », tout le calendrier est mis à l'échelle proportionnellement depuis le début du projet.
 - Les tâches récapitulatives (summary) englobent leurs enfants recalculés.
+
+## Suivi d'avancement
+
+- **Barres de progression** dans le Gantt (et les exports HTML/PDF) : remplissage sombre à hauteur du % achevé, sur la barre avec marge (bleue) et sur la barre initiale (grise).
+- **Ligne de progression** (onglet Affichage, date de statut réglable, aujourd'hui par défaut) : ligne verticale verte en pointillés à la date de statut, avec un **losange sur chaque tâche en cours** à cette date — rouge si l'avancement est inférieur à ce que le calendrier prévoit (retard), vert sinon. Le % attendu est calculé en temps ouvré quand le calendrier est actif.
+- **Tâches en retard** : barre latérale rouge sur la ligne des tâches non terminées dont la fin prévue est dépassée à la date de statut ; compteur « En retard » dans la barre de statut.
+- **% achevé des récapitulatives** : cumulé au prorata des durées des tâches filles (comme MS Project).
 
 ## Édition du planning
 

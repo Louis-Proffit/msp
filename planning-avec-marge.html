@@ -56,6 +56,9 @@ td[data-e]{cursor:text}td[data-e]:hover{box-shadow:inset 0 0 0 1px var(--mu)}
 .sm.gr .n{background:var(--su);height:8px;top:12px;border-radius:0}
 .m{transform:rotate(45deg)}.m.o{background:var(--or);top:2px;width:8px;height:8px;border-radius:0}.m.n{background:var(--ms);top:12px;width:11px;height:11px;border-radius:0}
 .n.cr,.sm.gr .n.cr{background:var(--cr)}.n.pa,.sm.gr .n.pa{background:var(--pa)}.m.n.cr{background:var(--cr)}.m.n.pa{background:var(--pa)}
+.pg{background:var(--tx);opacity:.45;height:11px;top:11px;border-radius:3px}.sm.gr .pg{height:8px;top:12px;border-radius:0}
+.pgo{background:var(--tx);opacity:.3;height:6px;top:3px;border-radius:3px}
+tr.late>td:first-child{box-shadow:inset 3px 0 0 var(--cr)}.gr.late{box-shadow:inset 3px 0 0 var(--cr)}
 .sel>td,.gr.sel{background-color:color-mix(in srgb,var(--pa) 16%,var(--pn))!important}
 .lb{position:absolute;top:6px;font-size:11px;color:var(--mu);white-space:nowrap;pointer-events:none}
 .pan h4{margin:8px 0 3px;font-size:12px;color:var(--mu)}.pan select{width:100%;margin-top:2px}
@@ -106,7 +109,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 
 <div class="bar" id="tab-v" hidden>
 <section class="g"><div class="row"><button class="big" id="zfit"><i>⤢</i>Tout le projet</button><button class="big" id="zday"><i>🔍</i>1 jour</button></div><h5>Zoom</h5></section>
-<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label></div><h5>Éléments</h5></section>
+<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label><label><input type="checkbox" id="showP" checked> Ligne de progression <input type="date" id="sd"></label></div><h5>Éléments</h5></section>
 </div>
 
 <div class="bar" id="tab-m" hidden>
@@ -185,6 +188,7 @@ function applyCals(){defCalUid=($('calSel')&&$('calSel').value)||projCalUid;
   dayH=Math.max(1,dayMsCal(effCal(defCalUid))/36e5)}
 function durMs(t){const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');return m?(+m[1]*60+ +m[2])*60000:0}
 const wdays=(t,a,b)=>useCal()?workDiff(calOf(t),a,b)/dayMsCal(calOf(t)):(+b-+a)/DAY;
+function sdDate(){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec($('sd').value||'');return m?new Date(+m[1],+m[2]-1,+m[3],12,0,0):new Date()}
 
 function detect(k){
   const vs=tasks.map(t=>t.v[k]).filter(x=>x!==undefined&&x!=='');
@@ -344,6 +348,9 @@ function compute(k,mode){
     const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');
     t.v._nd=m&&!t.kids.length?String((+m[1]+m[2]/60)*k):'';
   });
+  const pctOf=t=>{if(!t.kids.length)return Math.max(0,Math.min(100,parseFloat(t.v.PercentComplete||'0')||0));
+    let a=0,b=0;t.kids.forEach(c=>{const d=uc?durMs(c):(+c.f-+c.s);a+=pctOf(c)*d;b+=d});return b?a/b:0};
+  tasks.forEach(t=>t.pct=pctOf(t));
 }
 
 /* ---- Édition du planning (ajout/suppression/déplacement/liens) + undo/redo ---- */
@@ -498,16 +505,17 @@ function render(){
   if(!doc)return;
   const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);computeCrit();computePath();
   const vc=vcols(),rs=rows(),ppd=getPPD(),showO=$('showO').checked;$('zl').textContent=+$('zoom').value===0?'Tout':'1 j = '+(ppd<10?ppd.toFixed(1):Math.round(ppd))+' px';
-  $('tb').innerHTML=rs.map(t=>`<tr data-u="${t.uid}" class="${t.kids.length?'sm':''}${t.uid===selUid?' sel':''}">`+vc.map(c=>{
-    const d=esc(fmt(c,t.v[c.k]));let inner=d,pad='';
+  const sd=sdDate(),late=t=>$('showP').checked&&t.pct<100&&+sd>+t.nf;
+  $('tb').innerHTML=rs.map(t=>`<tr data-u="${t.uid}" class="${t.kids.length?'sm':''}${t.uid===selUid?' sel':''}${late(t)?' late':''}">`+vc.map(c=>{
+    const d=c.k==='PercentComplete'&&t.kids.length?esc(Math.round(t.pct)+' %'):esc(fmt(c,t.v[c.k]));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(t.lvl-1)*16}px"`;
       inner=`<span class="tg"${t.kids.length?` data-u="${t.uid}"`:''}>${t.kids.length?(collapsed.has(t.uid)?'▶':'▼'):''}</span>`+d}
     return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl)$/.test(c.k)?' mg':''}" title="${d}${EDIT.has(c.k)?' — double-clic pour modifier':''}"${pad}${EDIT.has(c.k)?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
-  const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE));
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
+  const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE)),nLate=tasks.filter(t=>!t.kids.length&&t.pct<100&&+sd>+t.nf).length;
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
@@ -521,12 +529,20 @@ function render(){
     let b='';const cc=clsOf(t);
     if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n${cc}" style="left:${x(t.ns)-5}px"></i>`}
     else{if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
-      b+=`<i class="n${cc}" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`}
-    h+=`<div data-u="${t.uid}" class="gr${t.kids.length?' sm':''}${t.uid===selUid?' sel':''}" title="${esc(tip)}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}${labelHTML(t,x)}</div>`;
+      b+=`<i class="n${cc}" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`;
+      if(t.pct>0){const w=Math.max(2,(t.nf-t.ns)/DAY*ppd);b+=`<i class="pg" style="left:${x(t.ns)}px;width:${Math.max(1,w*t.pct/100)}px"></i>`;
+        if(showO){const w0=Math.max(2,(t.f-t.s)/DAY*ppd);b+=`<i class="pgo" style="left:${x(t.s)}px;width:${Math.max(1,w0*t.pct/100)}px"></i>`}}}
+    h+=`<div data-u="${t.uid}" class="gr${t.kids.length?' sm':''}${t.uid===selUid?' sel':''}${late(t)?' late':''}" title="${esc(tip)}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}${labelHTML(t,x)}</div>`;
   });
   const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'var(--pa)':c==='cr'?'var(--cr)':'currentColor'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
   const now=Date.now(),td=$('showT').checked&&now>=t0&&now<=t1?`<div style="position:absolute;left:${x(now)}px;top:0;bottom:0;border-left:1px dashed var(--cr);z-index:1;pointer-events:none"></div>`:'';
-  $('R').innerHTML=h+lk+td+'</div>';
+  const pl=(()=>{if(!$('showP').checked)return'';const s2=sdDate();if(+s2<t0||+s2>t1)return'';
+    let s=`<div style="position:absolute;left:${x(s2)}px;top:0;bottom:0;border-left:1px dashed var(--ac);z-index:1;pointer-events:none"></div>`;
+    rs.forEach((t,j)=>{if(t.ms||t.kids.length||+t.ns>+s2||+s2>+t.nf)return;
+      const ex=useCal()?workDiff(calOf(t),t.ns,s2)/Math.max(1,workDiff(calOf(t),t.ns,t.nf)):(+s2-+t.ns)/Math.max(1,+t.nf-+t.ns);
+      s+=`<i class="m" style="left:${x(s2)-4}px;top:${52+j*26+4}px;width:8px;height:8px;background:${t.pct+1<ex*100?'var(--cr)':'var(--ac)'}"></i>`});
+    return s})();
+  $('R').innerHTML=h+lk+td+pl+'</div>';
   $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;
   if($('bAdd')){$('bAdd').disabled=!doc;['bDel','bUp','bDn','bInd','bOut'].forEach(i=>$(i).disabled=!doc||!selUid);
     $('bUn').disabled=!(hidx>0);$('bRe').disabled=!(hidx<hist.length-1)}
@@ -645,10 +661,13 @@ function buildSVG(){
     else{
       if(show)bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(2,(t.f-t.s)/DAY*ppd)}" height="6" rx="3" fill="#aab4b2"/>`;
       bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(2,(t.nf-t.ns)/DAY*ppd)}" height="${sm?8:11}" rx="${sm?0:3}" fill="${clc(t)||(sm?'#1b2a3a':'#2f6fba')}"/>`;
+      if(t.pct>0){const w=Math.max(2,(t.nf-t.ns)/DAY*ppd);bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(1,w*t.pct/100)}" height="${sm?8:11}" fill="#1d2b2a" opacity=".45"/>`;
+        if(show){const w0=Math.max(2,(t.f-t.s)/DAY*ppd);bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(1,w0*t.pct/100)}" height="6" fill="#1d2b2a" opacity=".3"/>`}}
     }
   });
   rs.forEach((t,i)=>{const lt=detailText(t);if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
   const now=Date.now();if($('showT').checked&&now>=t0&&now<=t1)bars+=`<line x1="${x(now)}" y1="${TOP}" x2="${x(now)}" y2="${H}" stroke="#d33a2c" stroke-dasharray="4 3"/>`;
+  if($('showP').checked){const s2=sdDate();if(+s2>=t0&&+s2<=t1)bars+=`<line x1="${x(s2)}" y1="${TOP}" x2="${x(s2)}" y2="${H}" stroke="#2b7a3d" stroke-dasharray="4 3"/>`}
   const lk=$('showL').checked?linkPaths(rs,x,y0).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'#8a4bd8':c==='cr'?'#d33a2c':'#6b7a78'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join(''):'';
   const defs='<defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="#6b7a78"/></marker></defs>';
   return{s:defs+top+bg+grid+tx+bars+lk,W,H};
@@ -713,7 +732,7 @@ document.addEventListener('click',e=>document.querySelectorAll('details.dd[open]
 let lastW=0;new ResizeObserver(()=>{const w=$('R').clientWidth;if(doc&&Math.abs(w-lastW)>1){lastW=w;render()}}).observe($('R'));
 addEventListener('resize',()=>doc&&render());
 async function load(f){
-  err('');fname=f.name.replace(/\.[^.]+$/,'');
+  err('');fname=f.name.replace(/\.[^.]+$/,'');$('sd').value=iso(new Date()).slice(0,10);
   try{
     const buf=await f.arrayBuffer(),h=new Uint8Array(buf.slice(0,4));
     if(h[0]===0xD0&&h[1]===0xCF&&h[2]===0x11&&h[3]===0xE0)
@@ -722,7 +741,7 @@ async function load(f){
   }catch(e){err(e.message)}
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
-['k','mode','zoom','showO','showL','showC','showT','pm'].forEach(i=>$(i).oninput=render);
+['k','mode','zoom','showO','showL','showC','showT','showP','sd','pm'].forEach(i=>$(i).oninput=render);
 $('calOn').oninput=()=>{applyCals();render()};
 $('calSel').oninput=()=>{applyCals();render()};
 addEventListener('dragover',e=>e.preventDefault());
