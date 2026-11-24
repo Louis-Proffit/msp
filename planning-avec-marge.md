@@ -26,7 +26,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 
 ## Vue tableau (gauche)
 
-- Colonnes issues des champs MS Project (ID, UID, Nom, WBS, Durée, Début, Fin, % achevé, ressources, prédécesseurs, attributs étendus, etc.) plus colonnes calculées : début/fin/durée avec marge et décalage de fin.
+- Colonnes issues des champs MS Project (ID, UID, Nom, WBS, Durée, Début, Fin, % achevé, ressources, prédécesseurs, **successeurs**, attributs étendus, etc.) plus colonnes calculées : début/fin/durée avec marge, décalage de fin, alerte contrainte.
 - Tri et **filtres façon Excel** via le bouton ▾ de chaque en-tête (sélection de valeurs, recherche, conditions comparatives).
 - **Regrouper par** (liste « Regrouper » de l'onglet Tâche) : les lignes sont groupées sous des en-têtes de groupe (valeur + effectif), dans le tableau comme dans le Gantt, façon « Regrouper par » de MS Project. Par « Noms des ressources », une tâche affectée à plusieurs ressources apparaît dans chaque groupe. Le tri en cours s'applique à l'intérieur des groupes ; les filtres s'appliquent avant regroupement.
 - **Sélection multiple** façon MS Project : `Ctrl`+clic (ou `Cmd`+clic) pour ajouter/retirer une tâche, `Maj`+clic pour sélectionner une plage depuis la dernière tâche cliquée, clic simple pour tout désélectionner. Compteur « Sélection : N tâche(s) » dans la barre de statut ; la suppression supprime toute la sélection.
@@ -62,6 +62,14 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - **Monter / Descendre** : réordonne la tâche parmi ses frères. **Indenter / Désindenter** : change son niveau hiérarchique (elle devient enfant de la tâche précédente / remonte d'un niveau).
 - **Édition en ligne** : double-clic sur une cellule surlignée — **toutes les colonnes** sont éditables (sauf UID, récapitulatif, niveau, ressources et colonnes calculées) : nom, durée (`3j`, `24h`, `PT8H0M`), dates (`jj/mm/aaaa`), nombres, booléens (Oui/Non), textes libres, et **prédécesseurs** au format MS Project (`1FD`, `2FF+1j`, séparés par des virgules ; vider la cellule supprime tous les liens). Modifier une date ou une durée recalcule l'autre, et tout le planning avec marge est recalculé (liens compris). Passer une tâche en jalon (`Milestone` = Oui) la réduit à un losange.
 - **Menu contextuel** : clic droit sur une ligne (tableau ou Gantt) → Ajouter / Supprimer / Monter / Descendre / Indenter / Désindenter / Annuler / Rétablir.
+- **Colonnes « Prédécesseurs » et « Successeurs » éditables** : saisir les liens au format MS Project (`2FD`, `3FF+1j`, séparés par des virgules ; vider = supprimer). Éditer les successeurs d'une tâche remplace tous ses liens sortants. Les liens circulaires sont refusés.
+
+## Édition graphique dans le Gantt
+
+- **Glisser une barre** (corps) : déplace la tâche (début + fin, durée conservée), par pas d'un jour, snappé sur le temps ouvré si le calendrier est actif ; les successeurs sont recalculés.
+- **Tirer le bord droit d'une barre** : redimensionne la tâche (la fin suit la souris, snappée en fin de journée ouvrée ; la durée est recalculée).
+- **Tirer le bord droit d'une barre vers une autre barre** : crée un lien **FD** (finir-à-démarrer) entre les deux tâches, comme dans MS Project.
+- Toutes ces modifications sont undoables (Ctrl+Z), recalculent le planning avec marge et sont persistées dans l'export XML.
 - **Annuler / Rétablir** (boutons ↶ ↷ ou `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Maj+Z`) : historique de 100 états.
 - Les tâches récapitulatives ne sont pas éditables en durée/dates (elles englobent leurs filles), mais leur nom et leurs prédécesseurs le sont.
 
