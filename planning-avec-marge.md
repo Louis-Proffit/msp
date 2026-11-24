@@ -20,6 +20,10 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 | **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
 | **Format** | Chemin critique en rouge, chemin de la tâche sélectionnée (prédécesseurs/successeurs pilotants ou tous), texte affiché à droite des barres (nom, ID, durée, dates, % achevé, ressources, décalage de fin) |
 
+## Séparateur tableau / Gantt
+
+- La limite verticale entre le tableau (gauche) et le Gantt (droite) se **glisse à la souris** (poignée entre les deux volets, surlignée au survol). Largeur min 220 px, max 92 % ; la position est **mémorisée** (localStorage) et restaurée au rechargement.
+
 ## Vue tableau (gauche)
 
 - Colonnes issues des champs MS Project (ID, UID, Nom, WBS, Durée, Début, Fin, % achevé, ressources, prédécesseurs, attributs étendus, etc.) plus colonnes calculées : début/fin/durée avec marge et décalage de fin.
@@ -55,7 +59,8 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - **Ajouter** : insère une tâche après la tâche sélectionnée (même niveau hiérarchique, durée 8 h, début au prochain jour ouvré après la fin de la sélection).
 - **Suppr.** (ou touche `Suppr`) : supprime la tâche sélectionnée et tout son sous-arbre, et retire les liens qui la ciblaient.
 - **Monter / Descendre** : réordonne la tâche parmi ses frères. **Indenter / Désindenter** : change son niveau hiérarchique (elle devient enfant de la tâche précédente / remonte d'un niveau).
-- **Édition en ligne** : double-clic sur une cellule surlignée — nom, durée (`3j`, `24h`, `PT8H0M`), dates de début/fin (`jj/mm/aaaa`), % achevé, et **prédécesseurs** au format MS Project (`1FD`, `2FF+1j`, séparés par des virgules ; vider la cellule supprime tous les liens). Modifier une date ou une durée recalcule l'autre, et tout le planning avec marge est recalculé (liens compris).
+- **Édition en ligne** : double-clic sur une cellule surlignée — **toutes les colonnes** sont éditables (sauf UID, récapitulatif, niveau, ressources et colonnes calculées) : nom, durée (`3j`, `24h`, `PT8H0M`), dates (`jj/mm/aaaa`), nombres, booléens (Oui/Non), textes libres, et **prédécesseurs** au format MS Project (`1FD`, `2FF+1j`, séparés par des virgules ; vider la cellule supprime tous les liens). Modifier une date ou une durée recalcule l'autre, et tout le planning avec marge est recalculé (liens compris). Passer une tâche en jalon (`Milestone` = Oui) la réduit à un losange.
+- **Menu contextuel** : clic droit sur une ligne (tableau ou Gantt) → Ajouter / Supprimer / Monter / Descendre / Indenter / Désindenter / Annuler / Rétablir.
 - **Annuler / Rétablir** (boutons ↶ ↷ ou `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Maj+Z`) : historique de 100 états.
 - Les tâches récapitulatives ne sont pas éditables en durée/dates (elles englobent leurs filles), mais leur nom et leurs prédécesseurs le sont.
 
