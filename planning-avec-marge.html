@@ -98,7 +98,8 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 
 <div class="bar" id="tab-p" hidden>
 <section class="g"><div class="row col"><label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label><label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label></div><h5>Marge</h5></section>
-<section class="g"><div class="row"><span class="hint">Chaque durée est multipliée par le coefficient, puis les tâches et jalons suivants sont décalés. Planning avec marge en bleu, initial en gris.</span></div><h5>Principe</h5></section>
+<section class="g"><div class="row col"><label><input type="checkbox" id="calOn"> Jours ouvrés (calendrier du fichier)</label><label>Calendrier <select id="calSel"></select></label><small class="hint" id="calInfo"></small></div><h5>Calendrier</h5></section>
+<section class="g"><div class="row"><span class="hint">Chaque durée est multipliée par le coefficient, puis les tâches et jalons suivants sont décalés. Planning avec marge en bleu, initial en gris. Avec « Jours ouvrés », les durées sont comptées en temps ouvré (week-ends et jours fériés du fichier exclus) et les jours non travaillés sont grisés dans le Gantt.</span></div><h5>Principe</h5></section>
 </div>
 
 <div class="bar" id="tab-v" hidden>
@@ -123,12 +124,65 @@ const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d
 const fd=d=>d.toLocaleDateString('fr-FR');
 const kids=(e,t)=>[...e.children].filter(c=>c.localName===t);
 const g=(e,t)=>{const n=kids(e,t)[0];return n?n.textContent:null};
-const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',Notes:'Notes',Summary:'Récapitulative',Milestone:'Jalon',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)'};
+const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',CalendarUID:'Calendrier',Notes:'Notes',Summary:'Récapitulative',Milestone:'Jalon',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)'};
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
 const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
-let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning';
+let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8;
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
+
+/* ---- Calendriers : calcul en temps ouvré ---- */
+const msOfDay=d=>d.getHours()*36e5+d.getMinutes()*6e4+d.getSeconds()*1e3+d.getMilliseconds();
+const tms=s=>{const m=/^(\d+):(\d+):(\d+)/.exec(s||'');return m?+m[1]*36e5+ +m[2]*6e4+ +m[3]*1e3:0};
+const useCal=()=>{const c=$('calOn');return !!(c&&c.checked&&Object.keys(cals).length)};
+function stdWeek(){const w=new Map();w.set(1,{working:false,times:[]});w.set(7,{working:false,times:[]});
+  for(let i=2;i<=6;i++)w.set(i,{working:true,times:[[288e5,432e5],[468e5,612e5]]});return w}
+function dayStatus(cal,d){d=new Date(d);d.setHours(0,0,0,0);const dd=+d;
+  for(const e of cal.exc)if(dd>=e.from&&dd<=e.to)return e.working;
+  const w=cal.week.get(new Date(dd).getDay()+1);return !!(w&&w.working)}
+function dayWorkMs(cal,d){const w=cal.week.get(d.getDay()+1);if(!w||!w.working)return 0;
+  let m=0;for(const[a,b]of w.times)m+=b-a;return m}
+function dayMsCal(cal){let m=0;cal.week.forEach(w=>{if(w.working){let s=0;for(const[a,b]of w.times)s+=b-a;m=Math.max(m,s)}});return m||288e5}
+function posInDay(cal,d){const w=cal.week.get(d.getDay()+1);if(!dayStatus(cal,d)||!w)return dayWorkMs(cal,d);
+  const ms=msOfDay(d);let acc=0;for(const[a,b]of w.times){if(ms>=b)acc+=b-a;else if(ms>a)acc+=ms-a}return acc}
+function snapWork(cal,d){d=new Date(d);
+  for(let i=0;i<370;i++){if(dayStatus(cal,d)){const w=cal.week.get(d.getDay()+1);
+    if(w){const ms=msOfDay(d);for(const[a,b]of w.times)if(ms<b)return ms<a?new Date(+d-ms+a):new Date(d)}}
+    d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)}
+  return d}
+function instantAt(cal,dayStart,pos){const w=cal.week.get(new Date(dayStart).getDay()+1);let acc=0;
+  for(const[a,b]of w.times){const l=b-a;if(pos<=acc+l)return dayStart+a+(pos-acc);acc+=l}
+  return dayStart+864e5-1}
+function addWork(cal,start,ms){let cur=snapWork(cal,start),rem=ms;
+  for(let i=0;i<20000&&rem>0;i++){const av=dayWorkMs(cal,cur)-posInDay(cal,cur);
+    if(av>0){if(rem<=av){const d0=new Date(cur);d0.setHours(0,0,0,0);return new Date(instantAt(cal,+d0,posInDay(cal,cur)+rem))}
+      rem-=av}
+    cur=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+1);cur=snapWork(cal,cur)}
+  return cur}
+function subWork(cal,end,ms){let cur=new Date(end);
+  for(let i=0;i<20000&&ms>0;i++){if(dayStatus(cal,cur)){const pos=posInDay(cal,cur);
+    if(pos>0){if(ms<pos){const d0=new Date(cur);d0.setHours(0,0,0,0);return new Date(instantAt(cal,+d0,pos-ms))}
+      ms-=pos}}
+    cur=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()-1,23,59,59,999)}
+  return cur}
+function workDiff(cal,a,b){a=new Date(a);b=new Date(b);if(+b<=+a)return 0;let tot=0;const e=b;
+  for(let d=new Date(a.getFullYear(),a.getMonth(),a.getDate());+d<=+e;d.setDate(d.getDate()+1)){
+    if(!dayStatus(cal,d))continue;const w=cal.week.get(d.getDay()+1);if(!w)continue;
+    const ds=+d,de=ds+864e5-1,lo=Math.max(+a,ds),hi=Math.min(+b,de);
+    for(const[x,y]of w.times){const s=Math.max(lo,ds+x),ee=Math.min(hi,ds+y);if(ee>s)tot+=ee-s}}
+  return tot}
+function effCal(uid){const chain=[];let u=uid,n=0;
+  while(u!=null&&u!=='-1'&&cals[u]&&n++<10){chain.unshift(cals[u]);u=cals[u].base}
+  if(!chain.length)chain.push({week:stdWeek(),exc:[]});
+  const week=new Map(),exc=[];
+  chain.forEach(c=>{c.week.forEach((v,k)=>week.set(k,v));exc.push(...c.exc)});
+  return{week,exc}}
+function calOf(t){return t.cal||effCal(defCalUid)}
+function applyCals(){defCalUid=($('calSel')&&$('calSel').value)||projCalUid;
+  tasks.forEach(t=>t.cal=t.v.CalendarUID&&cals[t.v.CalendarUID]?effCal(t.v.CalendarUID):effCal(defCalUid));
+  dayH=Math.max(1,dayMsCal(effCal(defCalUid))/36e5)}
+function durMs(t){const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');return m?(+m[1]*60+ +m[2])*60000:0}
+const wdays=(t,a,b)=>useCal()?workDiff(calOf(t),a,b)/dayMsCal(calOf(t)):(+b-+a)/DAY;
 
 function detect(k){
   const vs=tasks.map(t=>t.v[k]).filter(x=>x!==undefined&&x!=='');
@@ -147,6 +201,22 @@ function parse(txt){
   const rn={};all('Resource').forEach(r=>rn[g(r,'UID')]=g(r,'Name'));
   const asg={};all('Assignment').forEach(a=>{const r=rn[g(a,'ResourceUID')];if(r)(asg[g(a,'TaskUID')]??=[]).push(r)});
   const ea={};all('ExtendedAttribute').filter(e=>e.parentNode.localName==='ExtendedAttributes').forEach(e=>ea[g(e,'FieldID')]=g(e,'Alias')||g(e,'FieldName'));
+  cals={};all('Calendar').forEach(c=>{const uid=g(c,'UID'),week=new Map(),exc=[];
+    const wds=kids(c,'WeekDays')[0];
+    if(wds)kids(wds,'WeekDay').forEach(w=>{const times=[],wts=kids(w,'WorkingTimes')[0];
+      if(wts)kids(wts,'WorkingTime').forEach(t=>times.push([tms(g(t,'FromTime')),tms(g(t,'ToTime'))]));
+      week.set(+g(w,'DayType'),{working:g(w,'DayWorking')==='1',times})});
+    const exs=kids(c,'CalendarExceptions')[0];
+    if(exs)kids(exs,'CalendarException').forEach(e=>{const tp=kids(e,'TimePeriod')[0];if(!tp)return;
+      const f=new Date(g(tp,'FromDate')),t2=new Date(g(tp,'ToDate'));if(isNaN(+f)||isNaN(+t2))return;
+      f.setHours(0,0,0,0);t2.setHours(23,59,59,999);
+      exc.push({from:+f,to:+t2,working:g(e,'Working')==='1',name:g(e,'Name')||''})});
+    cals[uid]={uid,name:g(c,'Name')||('Calendrier '+uid),base:g(c,'BaseCalendarUID'),week,exc}});
+  projCalUid=g(x.documentElement,'CalendarUID')||Object.keys(cals)[0]||null;defCalUid=projCalUid;
+  $('calSel').innerHTML=Object.values(cals).map(c=>`<option value="${esc(c.uid)}"${c.uid===projCalUid?' selected':''}>${esc(c.name)}</option>`).join('');
+  $('calOn').checked=Object.keys(cals).length>0;
+  const nexc=Object.values(cals).reduce((a,c)=>a+c.exc.filter(e=>!e.working).length,0);
+  $('calInfo').textContent=Object.keys(cals).length?`${Object.keys(cals).length} calendrier(s) · ${nexc} jour(s) non travaillé(s) dans le fichier`:'Aucun calendrier dans le fichier : calcul en jours calendaires';
   doc=x;tasks=[];roots=[];byUid={};collapsed=new Set();selUid=null;const keys=[];
   kids(root,'Task').forEach(e=>{
     const uid=g(e,'UID'),v={};
@@ -170,10 +240,11 @@ function parse(txt){
   $('lv').innerHTML='Niveaux : '+Array.from({length:maxL},(_,i)=>`<button data-l="${i+1}">${i+1}</button>`).join('')+'<button data-l="0">Tout</button>';
   tasks.forEach(t=>t.v._pred=t.preds.map(p=>{const q=byUid[p.uid],l=p.lag/60000/60/8;
     return(q?q.v.ID:p.uid)+['FF','FD','DF','DD'][p.type]+(l?(l>0?'+':'')+Math.round(l*10)/10+'j':'')}).join(', '));
+  applyCals();
   ['_ns','_nf','_nd','_dl'].forEach(k=>keys.push(k));if(!keys.includes('_pred'))keys.push('_pred');
   const order=[...PRIO.filter(k=>keys.includes(k)||k==='_res'),...keys.filter(k=>!PRIO.includes(k))];
   tasks.forEach(t=>{t.v._ns=t.v._nf=t.v._nd=t.v._dl=''});
-  cols=order.map(k=>{const type=detect(k);return{k,type,label:LAB[k]||k,unit:/Work/.test(k)?'h':'j',
+  cols=order.map(k=>{const type=k==='_ns'||k==='_nf'?'date':k==='_dl'?'num':detect(k);return{k,type,label:LAB[k]||k,unit:/Work/.test(k)?'h':'j',
     w:k==='Name'?280:k==='Notes'?200:type==='date'?105:/^_(pred|res)$/.test(k)?140:105}});
   vis=new Set(PRIO.filter(k=>order.includes(k)));sort=null;filt={};
   $('pan').innerHTML='<div class="b"><button onclick="setVis(1)">Toutes</button><button onclick="setVis(0)">Par défaut</button></div>'+
@@ -183,6 +254,10 @@ function parse(txt){
 let selUid=null,path=new Set(),pl=new Set();
 const E1=60000;
 function drv(q,t,p){
+  if(useCal()){const c=calOf(t);
+    return p.type===1?Math.abs(+t.ns-+addWork(c,+q.nf,p.lag))<E1:p.type===3?Math.abs(+t.ns-+addWork(c,+q.ns,p.lag))<E1:
+           p.type===0?Math.abs(+t.nf-+addWork(c,+q.nf,p.lag))<E1:Math.abs(+t.nf-+addWork(c,+q.ns,p.lag))<E1;
+  }
   return p.type===1?Math.abs(t.ns-(+q.nf+p.lag))<E1:p.type===3?Math.abs(t.ns-(+q.ns+p.lag))<E1:
          p.type===0?Math.abs(t.nf-(+q.nf+p.lag))<E1:Math.abs(t.nf-(+q.ns+p.lag))<E1;
 }
@@ -208,8 +283,8 @@ const clsOf=t=>path.has(t.uid)?' pa':$('showC').checked&&t.crit?' cr':'';
 const clc=t=>path.has(t.uid)?'#8a4bd8':$('showC').checked&&t.crit?'#d33a2c':'';
 const dsel=()=>[...document.querySelectorAll('#vpan [data-d]:checked')].map(e=>e.dataset.d);
 function detailText(t){
-  const o={nm:t.v.Name,id:t.v.ID,du:(t.v._nd&&!t.kids.length?Math.round(+t.v._nd/8*10)/10:Math.round((t.nf-t.ns)/DAY))+' j',
-    st:fd(t.ns),fi:fd(t.nf),pc:(t.v.PercentComplete||0)+' %',rs:t.v._res,dl:'+'+((t.nf-t.f)/DAY).toFixed(1)+' j'};
+  const o={nm:t.v.Name,id:t.v.ID,du:(t.v._nd&&!t.kids.length?Math.round(+t.v._nd/dayH*10)/10:Math.round(wdays(t,t.ns,t.nf)))+' j',
+    st:fd(t.ns),fi:fd(t.nf),pc:(t.v.PercentComplete||0)+' %',rs:t.v._res,dl:'+'+wdays(t,t.f,t.nf).toFixed(1)+' j'};
   return dsel().map(k=>o[k]).filter(Boolean).join(' · ');
 }
 function labelHTML(t,x){
@@ -223,8 +298,24 @@ function getPPD(){
 }
 function compute(k,mode){
   tasks.forEach(t=>{t.ns=t.nf=null;t.busy=0});
-  const P0=Math.min(...tasks.map(t=>+t.s)),leaves=tasks.filter(t=>!t.kids.length&&!t.sum);
-  if(mode==='prop')leaves.forEach(t=>{t.ns=new Date(P0+(t.s-P0)*k);t.nf=new Date(+t.ns+(t.f-t.s)*k)});
+  const uc=useCal(),P0=Math.min(...tasks.map(t=>+t.s)),leaves=tasks.filter(t=>!t.kids.length&&!t.sum);
+  const durOf=t=>uc?durMs(t)*k:(t.f-t.s)*k;
+  if(uc&&mode==='prop')leaves.forEach(t=>{const c=calOf(t);t.ns=snapWork(c,addWork(c,P0,workDiff(c,P0,+t.s)*k));t.nf=addWork(c,+t.ns,durOf(t))});
+  else if(uc){
+    const sched=t=>{
+      if(t.ns||t.busy)return;t.busy=1;
+      const d=durOf(t),c=calOf(t);let s=+t.s;
+      for(const p of t.preds){
+        const q=byUid[p.uid];if(!q||q.kids.length)continue;
+        sched(q);if(!q.ns)continue;
+        const cand=p.type===1?+addWork(c,+q.nf,p.lag):p.type===3?+addWork(c,+q.ns,p.lag):p.type===0?+subWork(c,+addWork(c,+q.nf,p.lag),d):+subWork(c,+addWork(c,+q.ns,p.lag),d);
+        if(cand>s)s=cand;
+      }
+      t.ns=snapWork(c,s);t.nf=addWork(c,+t.ns,d);t.busy=0;
+    };
+    leaves.forEach(sched);
+  }
+  else if(mode==='prop')leaves.forEach(t=>{t.ns=new Date(P0+(t.s-P0)*k);t.nf=new Date(+t.ns+(t.f-t.s)*k)});
   else{
     const sched=t=>{
       if(t.ns||t.busy)return;t.busy=1;
@@ -246,7 +337,7 @@ function compute(k,mode){
     t.ns=new Date(isFinite(a)?a:+t.s);t.nf=new Date(isFinite(b)?b:+t.f);
   }
   tasks.forEach(t=>{
-    t.v._ns=iso(t.ns);t.v._nf=iso(t.nf);t.v._dl=String((t.nf-t.f)/DAY);
+    t.v._ns=iso(t.ns);t.v._nf=iso(t.nf);t.v._dl=String(wdays(t,t.f,t.nf));
     const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');
     t.v._nd=m&&!t.kids.length?String((+m[1]+m[2]/60)*k):'';
   });
@@ -257,7 +348,7 @@ function fmt(c,r){
   switch(c.type){
     case'date':return fd(new Date(r));
     case'dur':{const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);
-      return c.unit==='j'?Math.round(h/8*10)/10+' j':Math.round(h*10)/10+' h'}
+      return c.unit==='j'?Math.round(h/dayH*10)/10+' j':Math.round(h*10)/10+' h'}
     case'bool':return r==='1'?'Oui':'Non';
     case'num':return c.k==='_dl'?(+r).toFixed(1):c.k==='ConstraintType'?(CT[r]||r):c.k==='PercentComplete'?r+' %':r;
   }
@@ -267,7 +358,7 @@ function val(t,c){
   const r=t.v[c.k];if(r===undefined||r==='')return null;
   if(c.type==='date')return+new Date(r);
   if(c.type==='num')return parseFloat(r);
-  if(c.type==='dur'){const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);return c.unit==='j'?h/8:h}
+  if(c.type==='dur'){const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);return c.unit==='j'?h/dayH:h}
   return fmt(c,r).toLowerCase();
 }
 const cmpv=(x,y)=>x===y?0:x===null?1:y===null?-1:typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'fr',{numeric:true});
@@ -321,12 +412,16 @@ function render(){
   const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${Math.round((nE-oE)/DAY)} j</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
+  const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE));
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
   if(ppd>=18)for(const d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);h+=`<span class="dy${d.getDay()%6?'':' we'}" style="left:${x(d)}px;width:${ppd}px">${d.getDate()}</span>`}
-  h+='</div>';
+  const shd=(()=>{if(!useCal()||ppd<4)return'';const c=effCal(defCalUid);let s='';
+    for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);if(!dayStatus(c,d))s+=`<div style="position:absolute;left:${x(d)}px;top:0;bottom:0;width:${Math.max(1,ppd)}px;background:var(--mu);opacity:.16"></div>`}
+    return s})();
+  h+=shd+'</div>'+shd;
   rs.forEach(t=>{
     const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
     let b='';const cc=clsOf(t);
@@ -436,6 +531,7 @@ function buildSVG(){
     grid+=`<line x1="${mx}" y1="${TOP}" x2="${mx}" y2="${H}" stroke="#e6ebe8"/>`+
       (m.getMonth()===0||+m===first?`<text x="${mx+4}" y="${TOP+14}" font-weight="700" fill="#1d2b2a">${m.getFullYear()}</text>`:'')+
       (ppd>=1?`<text x="${mx+4}" y="${TOP+26}" font-size="11" fill="#6b7a78">${m.toLocaleDateString('fr-FR',{month:'short'})}</text>`:'')}
+  if(useCal()&&ppd>=4){const c=effCal(defCalUid);for(let d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);if(!dayStatus(c,d))grid+=`<rect x="${x(d)}" y="${TOP}" width="${Math.max(1,ppd)}" height="${H-TOP}" fill="#6b7a78" opacity=".14"/>`}}
   if(ppd>=18)for(const d=new Date(t0);+d<=t1;d.setDate(d.getDate()+1)){d.setHours(0,0,0,0);tx+=`<text x="${x(d)+ppd/2}" y="${TOP+37}" font-size="9" text-anchor="middle" fill="#6b7a78"${d.getDay()%6?'':' opacity=".5"'}>${d.getDate()}</text>`}
   rs.forEach((t,i)=>{
     const ry=y0+i*RH,sm=t.kids.length>0;
@@ -523,6 +619,8 @@ async function load(f){
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
 ['k','mode','zoom','showO','showL','showC','showT','pm'].forEach(i=>$(i).oninput=render);
+$('calOn').oninput=()=>{applyCals();render()};
+$('calSel').oninput=()=>{applyCals();render()};
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>
