@@ -14,7 +14,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 
 | Onglet | Contenu |
 |---|---|
-| **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML ou PDF |
+| **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML, PDF, ou **PPTX (sélection)** |
 | **Tâche** | Boutons de niveaux hiérarchiques, **édition du planning** (ajouter/supprimer/monter/descendre/indenter/désindenter, Annuler/Rétablir), choix des colonnes visibles, effacement des filtres/tris |
 | **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), **calendrier** (jours ouvrés, choix du calendrier du projet) et **contraintes** (case « Appliquer les contraintes dans le calcul ») |
 | **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
@@ -29,6 +29,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 - Colonnes issues des champs MS Project (ID, UID, Nom, WBS, Durée, Début, Fin, % achevé, ressources, prédécesseurs, attributs étendus, etc.) plus colonnes calculées : début/fin/durée avec marge et décalage de fin.
 - Tri et **filtres façon Excel** via le bouton ▾ de chaque en-tête (sélection de valeurs, recherche, conditions comparatives).
 - **Regrouper par** (liste « Regrouper » de l'onglet Tâche) : les lignes sont groupées sous des en-têtes de groupe (valeur + effectif), dans le tableau comme dans le Gantt, façon « Regrouper par » de MS Project. Par « Noms des ressources », une tâche affectée à plusieurs ressources apparaît dans chaque groupe. Le tri en cours s'applique à l'intérieur des groupes ; les filtres s'appliquent avant regroupement.
+- **Sélection multiple** façon MS Project : `Ctrl`+clic (ou `Cmd`+clic) pour ajouter/retirer une tâche, `Maj`+clic pour sélectionner une plage depuis la dernière tâche cliquée, clic simple pour tout désélectionner. Compteur « Sélection : N tâche(s) » dans la barre de statut ; la suppression supprime toute la sélection.
 - Clic sur une ligne pour sélectionner la tâche ; clic sur ▶/▼ pour replier/déplier la hiérarchie.
 
 ## Vue Gantt (droite)
@@ -94,6 +95,7 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 | **CSV** | La vue tableau courante (séparateur `;`, compatible Excel) |
 | **HTML** | Une image SVG fidèle de la vue courante (tableau + Gantt), autonome |
 | **PDF** | Impression de cette même vue via le navigateur |
+| **PPTX (sélection)** | Fichier PowerPoint généré entièrement côté client (package OOXML/zip écrit en JS pur, sans bibliothèque) : une diapo de titre avec le récapitulatif du projet, une diapo avec l'image de la vue Gantt courante, puis **une diapo par tâche sélectionnée** (durée initiale/avec marge, dates, décalage, % achevé, ressources, prédécesseurs, alerte). Sans sélection, exporte les tâches visibles. Le fichier s'ouvre dans PowerPoint / LibreOffice / Google Slides |
 
 ## Barre de statut
 

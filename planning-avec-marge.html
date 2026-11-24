@@ -95,14 +95,14 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 
 <div class="bar" id="tab-f" hidden>
 <section class="g"><div class="row"><button class="big" onclick="file.click()"><i>📂</i>Ouvrir</button></div><h5>Fichier</h5></section>
-<section class="g"><div class="row"><button class="big" id="bx" disabled><i>🗂️</i>XML Project</button><button class="big" id="bc" disabled><i>📊</i>CSV (Excel)</button><button class="big" id="bh" disabled><i>🌐</i>HTML</button><button class="big" id="bp" disabled><i>📄</i>PDF</button></div><h5>Exporter la vue courante</h5></section>
+<section class="g"><div class="row"><button class="big" id="bx" disabled><i>🗂️</i>XML Project</button><button class="big" id="bc" disabled><i>📊</i>CSV (Excel)</button><button class="big" id="bh" disabled><i>🌐</i>HTML</button><button class="big" id="bp" disabled><i>📄</i>PDF</button><button class="big" id="bpptx" disabled><i>PPT</i>PPTX (sélection)</button></div><h5>Exporter (vue courante / sélection)</h5></section>
 </div>
 
 <div class="bar" id="tab-t">
 <section class="g"><div class="row"><span id="lv"></span></div><h5>Hiérarchie</h5></section>
 <section class="g"><div class="row"><button class="big" id="bAdd" disabled><i>➕</i>Ajouter</button><button class="big" id="bDel" disabled><i>🗑️</i>Suppr.</button><button class="big" id="bUp" disabled><i>⬆️</i>Monter</button><button class="big" id="bDn" disabled><i>⬇️</i>Descendre</button><button class="big" id="bInd" disabled><i>↪️</i>Indenter</button><button class="big" id="bOut" disabled><i>↩️</i>Désind.</button><button class="big" id="bUn" disabled><i>↶</i>Annuler</button><button class="big" id="bRe" disabled><i>↷</i>Rétablir</button></div><h5>Édition</h5></section>
 <section class="g"><div class="row"><label>Regrouper <select id="grp"></select></label><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
-<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner. Double-clic sur une cellule surlignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
+<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner (Ctrl+clic : sélection multiple, Maj+clic : plage). Double-clic sur une cellule surlignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
 </div>
 
 <div class="bar" id="tab-p" hidden>
@@ -138,7 +138,7 @@ const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineN
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
 const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
-let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null;
+let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null,multi=new Set();
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
 /* ---- Calendriers : calcul en temps ouvré ---- */
@@ -275,7 +275,7 @@ function parse(txt){
     cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
   $('grp').innerHTML='<option value="">Aucun</option>'+cols.map(c=>`<option value="${c.k}">${esc(c.label)}</option>`).join('');
   grp=null;
-  hist=[];saveHist();
+  hist=[];multi=new Set();saveHist();
 }
 
 let selUid=null,path=new Set(),pl=new Set();
@@ -414,12 +414,13 @@ function addTask(){if(!doc)return;
   const t={uid,v,lvl,sum:false,ms:false,s,f,kids:[],parent:null,preds:[],el:null};
   let idx=tasks.length;if(sel){idx=tasks.indexOf(sel)+1;while(idx<tasks.length&&tasks[idx].lvl>sel.lvl)idx++}
   tasks.splice(idx,0,t);byUid[uid]=t;rebuildTree();syncDom();selUid=uid;saveHist();render()}
-function delTask(){const t=byUid[selUid];if(!doc||!t)return;
-  const doomed=new Set();const collect=x=>{doomed.add(x.uid);x.kids.forEach(collect)};collect(t);
+function delTask(){if(!doc)return;const sel=new Set(multi);if(selUid)sel.add(selUid);
+  const list=[...sel].map(u=>byUid[u]).filter(Boolean);if(!list.length)return;
+  const doomed=new Set();const collect=x=>{doomed.add(x.uid);x.kids.forEach(collect)};list.forEach(collect);
   tasks=tasks.filter(x=>!doomed.has(x.uid));
   tasks.forEach(x=>x.preds=x.preds.filter(p=>!doomed.has(p.uid)));
   Object.keys(byUid).forEach(u=>{if(doomed.has(u))delete byUid[u]});
-  if(selUid&&doomed.has(selUid))selUid=null;
+  multi=new Set();if(selUid&&doomed.has(selUid))selUid=null;
   rebuildTree();syncDom();saveHist();render()}
 function moveTask(dir){const t=byUid[selUid];if(!doc||!t)return;const sib=t.parent?t.parent.kids:roots;const i=sib.indexOf(t),j=i+dir;
   if(j<0||j>=sib.length)return;sib.splice(i,1);sib.splice(j,0,t);
@@ -552,7 +553,7 @@ function render(){
   const sd=sdDate(),late=t=>$('showP').checked&&t.pct<100&&+sd>+t.nf;
   $('tb').innerHTML=rs.map(o=>o.hdr!==undefined
     ?`<tr class="grph"><td colspan="${vc.length}">${esc(o.hdr)} <em>(${o.n})</em></td></tr>`
-    :`<tr data-u="${o.uid}" class="${o.kids.length?'sm':''}${o.uid===selUid?' sel':''}${late(o)?' late':''}${o.warn?' warn':''}">`+vc.map(c=>{
+    :`<tr data-u="${o.uid}" class="${o.kids.length?'sm':''}${o.uid===selUid||multi.has(o.uid)?' sel':''}${late(o)?' late':''}${o.warn?' warn':''}">`+vc.map(c=>{
     const d=c.k==='PercentComplete'&&o.kids.length?esc(Math.round(o.pct)+' %'):esc(fmt(c,o.v[c.k]));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(o.lvl-1)*16}px"`;
       inner=`<span class="tg"${o.kids.length?` data-u="${o.uid}"`:''}>${o.kids.length?(collapsed.has(o.uid)?'▶':'▼'):''}</span>`+d}
@@ -561,7 +562,7 @@ function render(){
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
   const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE)),nLate=tasks.filter(t=>!t.kids.length&&t.pct<100&&+sd>+t.nf).length;
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.filter(o=>!o.hdr).length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCst()?`<span>Alertes <b>${tasks.filter(t=>!t.kids.length&&t.warn).length}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.filter(o=>!o.hdr).length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCst()?`<span>Alertes <b>${tasks.filter(t=>!t.kids.length&&t.warn).length}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${multi.size?`<span>Sélection : <b>${multi.size} tâche(s)</b></span>`:selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
@@ -583,7 +584,7 @@ function render(){
       if(!isNaN(+cd)&&+cd>=t0-864e5&&+cd<=t1+864e5)b+=`<i style="position:absolute;left:${x(cd)}px;top:2px;height:22px;border-left:2px solid ${t.warn?'var(--cr)':'var(--ms)'}"></i>`}
     if(useCst()&&t.v.Deadline){const dl2=new Date(t.v.Deadline);
       if(!isNaN(+dl2)&&+dl2>=t0-864e5&&+dl2<=t1+864e5)b+=`<i style="position:absolute;left:${x(dl2)}px;top:2px;height:22px;border-left:2px dashed var(--cr)"></i>`}
-    h+=`<div data-u="${t.uid}" class="gr${t.kids.length?' sm':''}${t.uid===selUid?' sel':''}${late(t)?' late':''}${t.warn?' warn':''}" title="${esc(tip)}${t.warn?'\n'+esc(t.warn):''}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}${labelHTML(t,x)}</div>`;
+    h+=`<div data-u="${t.uid}" class="gr${t.kids.length?' sm':''}${t.uid===selUid||multi.has(t.uid)?' sel':''}${late(t)?' late':''}${t.warn?' warn':''}" title="${esc(tip)}${t.warn?'\n'+esc(t.warn):''}" ${ppd>=3?`style="background-image:linear-gradient(to right,var(--ln) 1px,transparent 1px);background-size:${7*ppd}px 100%"`:''}>${b}${labelHTML(t,x)}</div>`;
   });
   const lk=$('showL').checked?`<svg style="position:absolute;left:0;top:0;pointer-events:none;z-index:1;color:var(--mu)" width="${W}" height="${52+rs.length*26}"><defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6z" fill="currentColor"/></marker></defs>${linkPaths(rs,x,52).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'var(--pa)':c==='cr'?'var(--cr)':'currentColor'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join('')}</svg>`:'';
   const now=Date.now(),td=$('showT').checked&&now>=t0&&now<=t1?`<div style="position:absolute;left:${x(now)}px;top:0;bottom:0;border-left:1px dashed var(--cr);z-index:1;pointer-events:none"></div>`:'';
@@ -594,7 +595,7 @@ function render(){
       s+=`<i class="m" style="left:${x(s2)-4}px;top:${52+j*26+4}px;width:8px;height:8px;background:${t.pct+1<ex*100?'var(--cr)':'var(--ac)'}"></i>`});
     return s})();
   $('R').innerHTML=h+lk+td+pl+'</div>';
-  $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;
+  $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;$('bpptx').disabled=!doc;
   if($('bAdd')){$('bAdd').disabled=!doc;['bDel','bUp','bDn','bInd','bOut'].forEach(i=>$(i).disabled=!doc||!selUid);
     $('bUn').disabled=!(hidx>0);$('bRe').disabled=!(hidx<hist.length-1)}
 }
@@ -796,7 +797,12 @@ $('vpan').addEventListener('change',e=>{if(e.target.dataset.d)render()});
 const pick=e=>{
   if(e.target.closest('[data-m],.tg'))return;
   const r=e.target.closest('[data-u]');if(!r)return;
-  selUid=selUid===r.dataset.u?null:r.dataset.u;render();
+  const u=r.dataset.u;
+  if(e.shiftKey&&selUid){const rs=rows(),i0=rs.findIndex(o=>o.uid===selUid),i1=rs.findIndex(o=>o.uid===u);
+    if(i0>=0&&i1>=0){const a=Math.min(i0,i1),b=Math.max(i0,i1);
+      for(let i=a;i<=b;i++)if(rs[i].uid)multi.add(rs[i].uid);selUid=u;render();return}}
+  if(e.ctrlKey||e.metaKey){if(!multi.size&&selUid&&selUid!==u)multi.add(selUid);multi.has(u)?multi.delete(u):multi.add(u);selUid=u;render();return}
+  multi=new Set();selUid=selUid===u?null:u;render();
 };
 $('L').addEventListener('click',pick);$('R').addEventListener('click',pick);
 $('L').addEventListener('dblclick',e=>{const td=e.target.closest('td[data-e]');if(!td)return;const t=byUid[td.parentElement.dataset.u];if(t)startEdit(td,t,td.dataset.e)});
@@ -811,6 +817,83 @@ $('zfit').onclick=()=>setZ(0);$('zday').onclick=()=>setZ(100);
 document.addEventListener('click',e=>document.querySelectorAll('details.dd[open]').forEach(d=>{if(!d.contains(e.target))d.open=false}));
 let lastW=0;new ResizeObserver(()=>{const w=$('R').clientWidth;if(doc&&Math.abs(w-lastW)>1){lastW=w;render()}}).observe($('R'));
 addEventListener('resize',()=>doc&&render());
+/* ---- Export PowerPoint (.pptx) : package OOXML minimal en JS pur ---- */
+const OA='http://schemas.openxmlformats.org/drawingml/2006/main',OR='http://schemas.openxmlformats.org/officeDocument/2006/relationships',OP='http://schemas.openxmlformats.org/presentationml/2006/main',PKG='http://schemas.openxmlformats.org/package/2006/relationships';
+function crc32(u8){let t=crc32.t;if(!t){t=crc32.t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}}let r=0xFFFFFFFF;for(let i=0;i<u8.length;i++)r=t[(r^u8[i])&255]^(r>>>8);return(r^0xFFFFFFFF)>>>0}
+function zipStore(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+  const now=new Date(),dt=((Math.max(1980,now.getFullYear())-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate(),tm=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1);
+  for(const f of files){const name=enc.encode(f.name),crc=crc32(f.data),n=f.data.length;
+    const lh=new Uint8Array(30),lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true);lv.setUint16(4,20,true);lv.setUint16(6,0x0800,true);lv.setUint16(8,0,true);lv.setUint16(10,tm,true);lv.setUint16(12,dt,true);lv.setUint32(14,crc,true);lv.setUint32(18,n,true);lv.setUint32(22,n,true);lv.setUint16(26,name.length,true);
+    parts.push(lh,name,f.data);
+    const ch=new Uint8Array(46),cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true);cv.setUint16(4,20,true);cv.setUint16(6,20,true);cv.setUint16(8,0x0800,true);cv.setUint16(10,0,true);cv.setUint16(12,tm,true);cv.setUint16(14,dt,true);cv.setUint32(16,crc,true);cv.setUint32(20,n,true);cv.setUint32(24,n,true);cv.setUint16(28,name.length,true);cv.setUint32(42,off,true);
+    cd.push(ch,name);off+=30+name.length+n}
+  let cdl=0;for(const p of cd)cdl+=p.length;
+  const end=new Uint8Array(22),ev=new DataView(end.buffer);
+  ev.setUint32(0,0x06054b50,true);ev.setUint16(8,files.length,true);ev.setUint16(10,files.length,true);ev.setUint32(12,cdl,true);ev.setUint32(16,off,true);
+  const all=[...parts,...cd,end];let len=0;for(const p of all)len+=p.length;
+  const out=new Uint8Array(len);let o=0;for(const p of all){out.set(p,o);o+=p.length}return out}
+function svgToPng(svg,w,h){return new Promise(res=>{let done=0;const fin=b=>{if(!done){done=1;res(b)}};
+  try{const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));const img=new Image();
+    img.onload=()=>{try{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(img,0,0,w,h);c.toBlob(b=>{URL.revokeObjectURL(url);fin(b)},'image/png')}catch(e){fin(null)}};
+    img.onerror=()=>{URL.revokeObjectURL(url);fin(null)};img.src=url;setTimeout(()=>fin(null),3000)}catch(e){fin(null)}})}
+function slideXML(sl){
+  const paras=(sl.paras||[]).map(p=>`<a:p><a:pPr><a:buChar char="•"/></a:pPr><a:r><a:rPr lang="fr-FR" sz="1400"><a:solidFill><a:srgbClr val="1D2B2A"/></a:solidFill></a:rPr><a:t>${esc(p)}</a:t></a:r></a:p>`).join('');
+  let pic='';
+  if(sl.img){const cx=11734800,cy=Math.min(Math.round(cx*(sl.ih||1000)/(sl.iw||3000)),5300000);
+    pic=`<p:pic><p:nvPicPr><p:cNvPr id="4" name="Gantt"/><p:cNvPicPr/><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="228600" y="1500000"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`}
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld xmlns:a="${OA}" xmlns:r="${OR}" xmlns:p="${OP}"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/>
+<p:sp><p:nvSpPr><p:cNvPr id="2" name="Titre"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph type="title"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="457200" y="274638"/><a:ext cx="11277600" cy="1143000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr wrap="square"><a:normAutofit/></a:bodyPr><a:p><a:r><a:rPr lang="fr-FR" sz="3000" b="1"><a:solidFill><a:srgbClr val="1D2B2A"/></a:solidFill></a:rPr><a:t>${esc(sl.title)}</a:t></a:r></a:p></p:txBody></p:sp>
+${sl.img?'':`<p:sp><p:nvSpPr><p:cNvPr id="3" name="Corps"/><p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr><p:ph idx="1"/></p:nvPr></p:nvSpPr><p:spPr><a:xfrm><a:off x="457200" y="1600200"/><a:ext cx="11277600" cy="4900000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr><p:txBody><a:bodyPr wrap="square"/><a:lstStyle/>${paras}</p:txBody></p:sp>`}
+${pic}
+</p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`}
+async function buildPPTX(list){
+  const enc=s=>new TextEncoder().encode(s),k=Math.max(0.1,+$('k').value||1);
+  const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
+  const slides=[{title:`${fname} — ${list.length} tâche(s)`,paras:[
+    `Export du ${new Date().toLocaleDateString('fr-FR')} · marge ×${k}`,
+    `Fin initiale : ${fd(new Date(oE))} → fin avec marge : ${fd(new Date(nE))} (+${Math.round(wdays({cal:effCal(defCalUid)},oE,nE))} j)`,
+    `Tâches exportées : ${list.length} / ${tasks.length}`]}];
+  try{const {s,W,H}=buildSVG(),sc=Math.min(1,3000/W);
+    const png=await svgToPng(`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Segoe UI,system-ui,sans-serif" font-size="12">${s}</svg>`,Math.max(1,Math.round(W*sc)),Math.max(1,Math.round(H*sc)));
+    if(png)slides.push({title:'Vue Gantt (planning avec marge)',img:new Uint8Array(await png.arrayBuffer()),iw:Math.round(W*sc),ih:Math.round(H*sc)})}catch(e){}
+  for(const t of list){const dc=cols.find(c=>c.k==='Duration');
+    slides.push({title:`${t.v.ID} — ${t.v.Name}`,paras:[
+      `Durée : ${dc?fmt(dc,t.v.Duration||''):''}${t.v._nd?' → avec marge : '+Math.round(+t.v._nd/dayH*10)/10+' j':''}`,
+      `Initial : ${fd(t.s)} → ${fd(t.f)}`,
+      `Avec marge : ${fd(t.ns)} → ${fd(t.nf)} (décalage +${(+t.v._dl).toFixed(1)} j)`,
+      `% achevé : ${Math.round(t.pct)} %${t.v._res?' · Ressources : '+t.v._res:''}`,
+      t.v._pred?`Prédécesseurs : ${t.v._pred}`:'Sans prédécesseur',
+      t.warn?`ALERTE : ${t.warn}`:''].filter(Boolean)})}
+  const files=[],N=slides.length;
+  files.push({name:'[Content_Types].xml',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/ppt/presentation.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>${slides.map((_,i)=>`<Override PartName="/ppt/slides/slide${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>`).join('')}</Types>`)});
+  files.push({name:'_rels/.rels',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${OR}/officeDocument" Target="ppt/presentation.xml"/></Relationships>`)});
+  files.push({name:'ppt/presentation.xml',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation xmlns:a="${OA}" xmlns:r="${OR}" xmlns:p="${OP}"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${slides.map((_,i)=>`<p:sldId id="${256+i}" r:id="rId${i+2}"/>`).join('')}</p:sldIdLst><p:sldSz cx="12192000" cy="6858000" type="wide"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`)});
+  files.push({name:'ppt/_rels/presentation.xml.rels',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${OR}/slideMaster" Target="slideMasters/slideMaster1.xml"/>${slides.map((_,i)=>`<Relationship Id="rId${i+2}" Type="${OR}/slide" Target="slides/slide${i+1}.xml"/>`).join('')}</Relationships>`)});
+  files.push({name:'ppt/slideMasters/slideMaster1.xml',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster xmlns:a="${OA}" xmlns:r="${OR}" xmlns:p="${OP}"><p:cSld><p:bg><p:bgPr><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill><a:effectLst/></p:bgPr></p:bg><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr></p:spTree></p:cSld><p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle><a:lvl1pPr><a:defRPr sz="4400" b="1"><a:solidFill><a:srgbClr val="1D2B2A"/></a:solidFill></a:defRPr></a:lvl1pPr></p:titleStyle><p:bodyStyle><a:lvl1pPr><a:defRPr sz="1800"><a:solidFill><a:srgbClr val="1D2B2A"/></a:solidFill></a:defRPr></a:lvl1pPr></p:bodyStyle><p:otherStyle><a:lvl1pPr><a:defRPr sz="1800"/></a:lvl1pPr></p:otherStyle></p:txStyles></p:sldMaster>`)});
+  files.push({name:'ppt/slideMasters/_rels/slideMaster1.xml.rels',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${OR}/slideLayout" Target="../slideLayouts/slideLayout1.xml"/><Relationship Id="rId2" Type="${OR}/theme" Target="../theme/theme1.xml"/></Relationships>`)});
+  files.push({name:'ppt/slideLayouts/slideLayout1.xml',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout xmlns:a="${OA}" xmlns:r="${OR}" xmlns:p="${OP}" type="blank" preserve="1"><p:cSld name="Blank"><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr/></p:spTree></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`)});
+  files.push({name:'ppt/slideLayouts/_rels/slideLayout1.xml.rels',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${OR}/slideMaster" Target="../slideMasters/slideMaster1.xml"/></Relationships>`)});
+  files.push({name:'ppt/theme/theme1.xml',data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="${OA}" name="Office"><a:themeElements><a:clrScheme name="Office"><a:dk1><a:sysClr val="windowText" lastClr="000000"/></a:dk1><a:lt1><a:sysClr val="window" lastClr="FFFFFF"/></a:lt1><a:dk2><a:srgbClr val="1D2B2A"/></a:dk2><a:lt2><a:srgbClr val="EEF1EE"/></a:lt2><a:accent1><a:srgbClr val="2B7A3D"/></a:accent1><a:accent2><a:srgbClr val="2F6FBA"/></a:accent2><a:accent3><a:srgbClr val="D9791C"/></a:accent3><a:accent4><a:srgbClr val="8A4BD8"/></a:accent4><a:accent5><a:srgbClr val="D33A2C"/></a:accent5><a:accent6><a:srgbClr val="6B7A78"/></a:accent6><a:hlink><a:srgbClr val="2F6FBA"/></a:hlink><a:folHlink><a:srgbClr val="8A4BD8"/></a:folHlink></a:clrScheme><a:fontScheme name="Office"><a:majorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:majorFont><a:minorFont><a:latin typeface="Calibri"/><a:ea typeface=""/><a:cs typeface=""/></a:minorFont></a:fontScheme><a:fmtScheme name="Office"><a:fillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:fillStyleLst><a:lnStyleLst><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln><a:ln w="9525"><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill><a:solidFill><a:schemeClr val="phClr"/></a:solidFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`)});
+  slides.forEach((sl,i)=>{
+    files.push({name:`ppt/slides/slide${i+1}.xml`,data:enc(slideXML(sl))});
+    const rels=[`<Relationship Id="rId1" Type="${OR}/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>`];
+    if(sl.img){rels.push(`<Relationship Id="rId2" Type="${OR}/image" Target="../media/image1.png"/>`);files.push({name:'ppt/media/image1.png',data:sl.img})}
+    files.push({name:`ppt/slides/_rels/slide${i+1}.xml.rels`,data:enc(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="${PKG}">${rels.join('')}</Relationships>`)});
+  });
+  return zipStore(files)}
+$('bpptx').onclick=async()=>{if(!doc)return;
+  const sel=[...multi];if(selUid&&!multi.has(selUid))sel.push(selUid);
+  let list=sel.map(u=>byUid[u]).filter(Boolean);
+  if(!list.length)list=rows().filter(o=>o.uid);
+  list=tasks.filter(t=>list.includes(t));
+  if(!list.length){err('Aucune tâche à exporter.');return}
+  try{const z=await buildPPTX(list);
+    dl(fname+(sel.length?'-selection':'')+'.pptx',z,'application/vnd.openxmlformats-officedocument.presentationml.presentation')}
+  catch(e){err('Export PPTX impossible : '+e.message)}
+};
+
 async function load(f){
   err('');fname=f.name.replace(/\.[^.]+$/,'');$('sd').value=iso(new Date()).slice(0,10);
   try{
