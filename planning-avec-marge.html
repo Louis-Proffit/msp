@@ -37,7 +37,7 @@ td{height:26px;padding:0 6px;border-right:1px solid var(--ln);border-bottom:1px 
 tr:hover>td,.gr:hover{background-color:color-mix(in srgb,var(--ac) 9%,var(--pn))}
 tr.sm td{font-weight:600;background-color:color-mix(in srgb,var(--ac) 5%,var(--pn))}
 td.nu{text-align:right}td.mg{color:var(--nw)}
-td[data-e]{cursor:text}td[data-e]:hover{box-shadow:inset 0 0 0 1px var(--mu)}
+td[data-e]{cursor:text;box-shadow:inset 0 -1px 0 var(--ln)}td[data-e]:hover{box-shadow:inset 0 0 0 1px var(--mu)}
 .tg{display:inline-block;width:16px;cursor:pointer;font-size:10px;color:var(--ac);user-select:none}
 .menu{position:fixed;z-index:50;width:250px;background:var(--pn);border:1px solid var(--ln);border-radius:6px;box-shadow:0 8px 28px #0004;padding:6px;font-size:13px}
 .menu a{display:block;padding:4px 8px;cursor:pointer;border-radius:4px}.menu a:hover{background:var(--hd)}.menu a.off{opacity:.4;pointer-events:none}
@@ -102,7 +102,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 <section class="g"><div class="row"><span id="lv"></span></div><h5>Hiérarchie</h5></section>
 <section class="g"><div class="row"><button class="big" id="bAdd" disabled><i>➕</i>Ajouter</button><button class="big" id="bDel" disabled><i>🗑️</i>Suppr.</button><button class="big" id="bUp" disabled><i>⬆️</i>Monter</button><button class="big" id="bDn" disabled><i>⬇️</i>Descendre</button><button class="big" id="bInd" disabled><i>↪️</i>Indenter</button><button class="big" id="bOut" disabled><i>↩️</i>Désind.</button><button class="big" id="bUn" disabled><i>↶</i>Annuler</button><button class="big" id="bRe" disabled><i>↷</i>Rétablir</button></div><h5>Édition</h5></section>
 <section class="g"><div class="row"><label>Regrouper <select id="grp"></select></label><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
-<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner (Ctrl+clic : sélection multiple, Maj+clic : plage). Double-clic sur une cellule surlignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Gantt : glisser une barre pour déplacer la tâche, tirer son bord droit pour changer la fin, tirer le bord droit vers une autre barre pour créer un lien FD. Colonnes « Prédécesseurs » et « Successeurs » éditables (« 1FD+2j »). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
+<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner (Ctrl+clic : sélection multiple, Maj+clic : plage). Double-clic (ou F2/Entrée sur la ligne sélectionnée) sur une cellule soulignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Gantt : glisser une barre pour déplacer la tâche, tirer son bord droit pour changer la fin, tirer le bord droit vers une autre barre pour créer un lien FD. Colonnes « Prédécesseurs » et « Successeurs » éditables (« 1FD+2j »). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
 </div>
 
 <div class="bar" id="tab-p" hidden>
@@ -690,7 +690,10 @@ document.addEventListener('click',e=>{if(menu&&!menu.contains(e.target))closeMen
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeCtx()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}
   else if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo()}
-  else if(e.key==='Delete'&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea')))delTask()});
+  else if(e.key==='Delete'&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea')))delTask()
+  else if((e.key==='F2'||e.key==='Enter')&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea'))){
+    const tr=document.querySelector('#tb tr[data-u="'+CSS.escape(selUid)+'"]'),td=tr&&tr.querySelector('td[data-e="Name"]');
+    if(td&&byUid[selUid])startEdit(td,byUid[selUid],'Name')}});
 
 /* ---- Niveaux de hiérarchie ---- */
 $('lv').addEventListener('click',e=>{
@@ -841,7 +844,10 @@ const pick=e=>{
   if(e.ctrlKey||e.metaKey){if(!multi.size&&selUid&&selUid!==u)multi.add(selUid);multi.has(u)?multi.delete(u):multi.add(u);selUid=u;render();return}
   multi=new Set();selUid=selUid===u?null:u;render();
 };
-$('L').addEventListener('click',pick);$('R').addEventListener('click',pick);
+$('L').addEventListener('click',e=>{
+  if(e.detail===2){const td=e.target.closest('td[data-e]');if(td){const t=byUid[td.parentElement.dataset.u];if(t){startEdit(td,t,td.dataset.e);return}}}
+  pick(e)});
+$('R').addEventListener('click',pick);
 $('L').addEventListener('dblclick',e=>{const td=e.target.closest('td[data-e]');if(!td)return;const t=byUid[td.parentElement.dataset.u];if(t)startEdit(td,t,td.dataset.e)});
 
 /* ---- Édition graphique dans le Gantt : déplacer / redimensionner / lier ---- */
