@@ -15,7 +15,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 | Onglet | Contenu |
 |---|---|
 | **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML ou PDF |
-| **Tâche** | Boutons de niveaux hiérarchiques, choix des colonnes visibles, effacement des filtres/tris |
+| **Tâche** | Boutons de niveaux hiérarchiques, **édition du planning** (ajouter/supprimer/monter/descendre/indenter/désindenter, Annuler/Rétablir), choix des colonnes visibles, effacement des filtres/tris |
 | **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), et **calendrier** : calcul en jours ouvrés avec choix du calendrier du projet |
 | **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui » |
 | **Format** | Chemin critique en rouge, chemin de la tâche sélectionnée (prédécesseurs/successeurs pilotants ou tous), texte affiché à droite des barres (nom, ID, durée, dates, % achevé, ressources, décalage de fin) |
@@ -39,6 +39,17 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 - En mode « Respecter les liens », les tâches sont recalculées dans l'ordre topologique : le début de chaque tâche est le maximum de son début initial et des fins (ou débuts) de ses prédécesseurs décalés du lag.
 - En mode « Homothétie », tout le calendrier est mis à l'échelle proportionnellement depuis le début du projet.
 - Les tâches récapitulatives (summary) englobent leurs enfants recalculés.
+
+## Édition du planning
+
+Le planning n'est plus en lecture seule (toutes les modifications sont répercutées dans l'export XML) :
+
+- **Ajouter** : insère une tâche après la tâche sélectionnée (même niveau hiérarchique, durée 8 h, début au prochain jour ouvré après la fin de la sélection).
+- **Suppr.** (ou touche `Suppr`) : supprime la tâche sélectionnée et tout son sous-arbre, et retire les liens qui la ciblaient.
+- **Monter / Descendre** : réordonne la tâche parmi ses frères. **Indenter / Désindenter** : change son niveau hiérarchique (elle devient enfant de la tâche précédente / remonte d'un niveau).
+- **Édition en ligne** : double-clic sur une cellule surlignée — nom, durée (`3j`, `24h`, `PT8H0M`), dates de début/fin (`jj/mm/aaaa`), % achevé, et **prédécesseurs** au format MS Project (`1FD`, `2FF+1j`, séparés par des virgules ; vider la cellule supprime tous les liens). Modifier une date ou une durée recalcule l'autre, et tout le planning avec marge est recalculé (liens compris).
+- **Annuler / Rétablir** (boutons ↶ ↷ ou `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Maj+Z`) : historique de 100 états.
+- Les tâches récapitulatives ne sont pas éditables en durée/dates (elles englobent leurs filles), mais leur nom et leurs prédécesseurs le sont.
 
 ## Calendrier et jours ouvrés
 
