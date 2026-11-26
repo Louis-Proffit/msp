@@ -56,6 +56,8 @@ td[data-e]{cursor:text;box-shadow:inset 0 -1px 0 var(--ln)}td[data-e]:hover{box-
 .n{background:var(--nw);height:11px;top:11px;border-radius:3px}
 .sm.gr .n{background:var(--su);height:8px;top:12px;border-radius:0}
 .m{transform:rotate(45deg)}.m.o{background:var(--or);top:2px;width:8px;height:8px;border-radius:0}.m.n{background:var(--ms);top:12px;width:11px;height:11px;border-radius:0}
+.bl{position:absolute;height:4px;top:0;background:repeating-linear-gradient(90deg,var(--ms) 0 4px,transparent 4px 7px)}
+.m.bl{top:1px;width:7px;height:7px;background:var(--ms)}
 .n.cr,.sm.gr .n.cr{background:var(--cr)}.n.pa,.sm.gr .n.pa{background:var(--pa)}.m.n.cr{background:var(--cr)}.m.n.pa{background:var(--pa)}
 .pg{background:var(--tx);opacity:.45;height:11px;top:11px;border-radius:3px}.sm.gr .pg{height:8px;top:12px;border-radius:0}
 .pgo{background:var(--tx);opacity:.3;height:6px;top:3px;border-radius:3px}
@@ -88,10 +90,10 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 </style>
 </head>
 <body>
-<div id="title"><b class="logo">M</b><span id="ttl">MSP — Planning avec marge</span><span class="sub">· import XML MS Project</span></div>
+<div id="title"><b class="logo">M</b><span id="ttl">MSP — Planning avec marge</span><span class="sub">· import XML / MSPDI MS Project</span></div>
 <header id="rib">
 <nav id="tabs"><button data-t="f">Fichier</button><button data-t="t" class="on">Tâche</button><button data-t="p">Projet</button><button data-t="v">Affichage</button><button data-t="m">Format</button></nav>
-<input type="file" id="file" accept=".xml,.mpp" hidden>
+<input type="file" id="file" accept=".xml,.mspdi,.mpp,application/xml,text/xml" hidden>
 
 <div class="bar" id="tab-f" hidden>
 <section class="g"><div class="row"><button class="big" onclick="file.click()"><i>📂</i>Ouvrir</button></div><h5>Fichier</h5></section>
@@ -108,13 +110,14 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 <div class="bar" id="tab-p" hidden>
 <section class="g"><div class="row col"><label>Coefficient <input type="number" id="k" value="1.3" min="0.1" step="0.05"></label><label>Méthode <select id="mode"><option value="dep">Respecter les liens</option><option value="prop">Homothétie du calendrier</option></select></label></div><h5>Marge</h5></section>
 <section class="g"><div class="row col"><label><input type="checkbox" id="calOn"> Jours ouvrés (calendrier du fichier)</label><label>Calendrier <select id="calSel"></select></label><small class="hint" id="calInfo"></small></div><h5>Calendrier</h5></section>
+<section class="g"><div class="row col"><label>Emplacement <select id="baseSlot"><option value="0">Baseline 0 (principale)</option><option value="1">Baseline 1</option><option value="2">Baseline 2</option><option value="3">Baseline 3</option><option value="4">Baseline 4</option><option value="5">Baseline 5</option><option value="6">Baseline 6</option><option value="7">Baseline 7</option><option value="8">Baseline 8</option><option value="9">Baseline 9</option><option value="10">Baseline 10</option></select></label><div class="row"><button class="big" id="bBase" disabled><i>📌</i>Définir référence</button><button class="big" id="bBaseClear" disabled><i>✕</i>Effacer</button></div></div><h5>Baselines MS Project</h5></section>
 <section class="g"><div class="row col"><label><input type="checkbox" id="useC" checked> Appliquer les contraintes dans le calcul</label><small class="hint">« Doit commencer le » / « Début au plus tôt » bloquent le début (marqueur orange dans le Gantt). « Doit finir le », « au plus tard » et échéance (`Deadline`) dépassées → alerte rouge, colonne « Alerte ».</small></div><h5>Contraintes</h5></section>
 <section class="g"><div class="row"><span class="hint">Chaque durée est multipliée par le coefficient, puis les tâches et jalons suivants sont décalés. Planning avec marge en bleu, initial en gris. Avec « Jours ouvrés », les durées sont comptées en temps ouvré (week-ends et jours fériés du fichier exclus) et les jours non travaillés sont grisés dans le Gantt.</span></div><h5>Principe</h5></section>
 </div>
 
 <div class="bar" id="tab-v" hidden>
 <section class="g"><div class="row"><button class="big" id="zfit"><i>⤢</i>Tout le projet</button><button class="big" id="zday"><i>🔍</i>1 jour</button></div><h5>Zoom</h5></section>
-<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label><label><input type="checkbox" id="showP" checked> Ligne de progression <input type="date" id="sd"></label></div><h5>Éléments</h5></section>
+<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showB" checked> Référence (baseline)</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label><label><input type="checkbox" id="showP" checked> Ligne de progression <input type="date" id="sd"></label></div><h5>Éléments</h5></section>
 </div>
 
 <div class="bar" id="tab-m" hidden>
@@ -125,7 +128,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 </div>
 </header>
 <div id="msg"></div>
-<div id="main"><div id="L"><div id="empty">Glissez ici votre planning exporté de MS Project au format <b>XML</b><br><small>(Fichier › Enregistrer sous › « Fichier XML »)</small></div></div><div id="sp" title="Glisser pour redimensionner le tableau"></div><div id="R"></div></div>
+<div id="main"><div id="L"><div id="empty">Glissez ici votre planning exporté de MS Project au format <b>XML / MSPDI</b><br><small>(Fichier › Enregistrer sous › « Fichier XML »)</small></div></div><div id="sp" title="Glisser pour redimensionner le tableau"></div><div id="R"></div></div>
 <footer id="sb"><div id="stats"><span>Aucun fichier chargé</span></div><div id="zm"><button id="zo" title="Zoom arrière">−</button><input type="range" id="zoom" min="0" max="100" value="0"><button id="zi" title="Zoom avant">+</button><span id="zl"></span></div></footer>
 <script>
 const $=id=>document.getElementById(id),DAY=864e5,p2=n=>String(n).padStart(2,'0');
@@ -134,10 +137,10 @@ const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d
 const fd=d=>d.toLocaleDateString('fr-FR');
 const kids=(e,t)=>[...e.children].filter(c=>c.localName===t);
 const g=(e,t)=>{const n=kids(e,t)[0];return n?n.textContent:null};
-const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',CalendarUID:'Calendrier',Notes:'Notes',Summary:'Récapitulative',Milestone:'Jalon',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)',_al:'Alerte contrainte',_succ:'Successeurs'};
+const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',BaselineStart:'Début de référence',BaselineFinish:'Fin de référence',BaselineDuration:'Durée de référence',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',CalendarUID:'Calendrier',Notes:'Notes',Summary:'Récapitulative',Milestone:'Type de tâche',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)',_sv:'Écart début (j)',_fv:'Écart fin (j)',_al:'Alerte contrainte',_succ:'Successeurs'};
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
-const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
+const PRIO=['ID','Name','Milestone','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl','_sv','_fv'];
 let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null,multi=new Set(),qsearch='',clip=null;
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
@@ -147,21 +150,65 @@ const tms=s=>{const m=/^(\d+):(\d+):(\d+)/.exec(s||'');return m?+m[1]*36e5+ +m[2
 const useCal=()=>{const c=$('calOn');return !!(c&&c.checked&&Object.keys(cals).length)};
 function stdWeek(){const w=new Map();w.set(1,{working:false,times:[]});w.set(7,{working:false,times:[]});
   for(let i=2;i<=6;i++)w.set(i,{working:true,times:[[288e5,432e5],[468e5,612e5]]});return w}
-function dayStatus(cal,d){d=new Date(d);d.setHours(0,0,0,0);const dd=+d;
-  for(const e of cal.exc)if(dd>=e.from&&dd<=e.to)return e.working;
+function ymd(d){d=new Date(d);d.setHours(0,0,0,0);return d}
+function dayDiff(a,b){a=ymd(a);b=ymd(b);const utc=dt=>Date.UTC(dt.getFullYear(),dt.getMonth(),dt.getDate());return Math.round((utc(b)-utc(a))/DAY)}
+function nthWeekday(d,position){const first=new Date(d.getFullYear(),d.getMonth(),1);if(position===5)return d.getDate()>21&&d.getDay()===first.getDay()?d.getDate():0;
+  let n=0;for(let x=1;x<=d.getDate();x++)if(new Date(d.getFullYear(),d.getMonth(),x).getDay()===d.getDay())n++;
+  if(position>=1&&position<=4)return n===position?d.getDate():0;return d.getDate()}
+function matchesRecurrence(e,d){
+  d=ymd(d);const ef=ymd(e.from),et=e.to?ymd(e.to):null;
+  if(!e.recur||d<ef||(et&&d>et))return false;
+  const diff=dayDiff(ef,d),period=Math.max(1,+e.period||1),type=+e.type||0;
+  const dow=e.daysOfWeek||0,bit=1<<(d.getDay()+0);
+  const withinOccurrences=()=>!e.occurrences||occurrenceIndex(e,d)<=e.occurrences;
+  let ok=false;
+  if(type===1){ok=diff>=0&&diff%period===0}
+  else if(type===4){const a=ef,weekStart=new Date(a);weekStart.setDate(a.getDate()-((a.getDay()+6)%7));
+    const dc=ymd(d),curStart=new Date(dc);curStart.setDate(dc.getDate()-((dc.getDay()+6)%7));
+    ok=Math.floor(dayDiff(weekStart,curStart)/7)%period===0&&(!(dow)&&dc.getDay()+1===a.getDay()+1||!!(dow&bit))}
+  else if(type===5||type===6){
+    ok=(d.getFullYear()-ef.getFullYear())*12+d.getMonth()-ef.getMonth();
+    ok=ok>=0&&ok%period===0;
+    if(type===5){ok=ok&&d.getDate()===(+e.monthDay||ef.getDate())}
+    else{const wd=e.daysOfWeek?e.daysOfWeek:0;if(wd){const pos=+e.monthPosition||0;let wdOk=false;
+      ok=ok&&((pos===5&&d.getDate()>21&&d.getDay()+1===e.weekDay)||(pos>=1&&pos<=4&&nthWeekday(d,pos)===d.getDate()&&d.getDay()+1===e.weekDay))}
+    }
+  }else if(type===2||type===3||type===7||type===8){
+    ok=d.getFullYear()>=ef.getFullYear()&&(d.getFullYear()-ef.getFullYear())%period===0&&d.getMonth()+1===(+e.month||ef.getMonth()+1);
+    if(type===2||type===7)ok=ok&&d.getDate()===(+e.monthDay||ef.getDate());
+    if(type===3||type===8){const pos=+e.monthPosition||0;const wd=e.weekDay||ef.getDay()+1;ok=ok&&d.getDay()+1===wd&&(pos===5?d.getDate()>21:nthWeekday(d,pos)>0)}
+  }
+  return ok&&withinOccurrences()}
+function occurrenceIndex(e,d){if(!e.occurrences)return 1;
+  const ef=ymd(e.from);
+  const type=+e.type||0,period=Math.max(1,+e.period||1);
+  if(type===1)return Math.floor(dayDiff(ef,d)/period)+1;
+  if(type===4)return Math.floor(dayDiff(ef,d)/7/period)+1;
+  if(type===5||type===6)return (d.getFullYear()-ef.getFullYear())*12+d.getMonth()-ef.getMonth()+1;
+  return d.getFullYear()-ef.getFullYear()+1}
+function exceptionForDay(cal,d){
+  d=ymd(d);
+  for(let i=cal.exc.length-1;i>=0;i--){const e=cal.exc[i];if(!e.recur&&d>=e.from&&d<=e.to)return e}
+  for(let i=cal.exc.length-1;i>=0;i--){const e=cal.exc[i];if(e.recur&&matchesRecurrence(e,d))return e}
+  return null}
+function dayStatus(cal,d){d=ymd(d);const dd=+d;
+  const e=exceptionForDay(cal,d);if(e)return e.working;
   const w=cal.week.get(new Date(dd).getDay()+1);return !!(w&&w.working)}
-function dayWorkMs(cal,d){const w=cal.week.get(d.getDay()+1);if(!w||!w.working)return 0;
-  let m=0;for(const[a,b]of w.times)m+=b-a;return m}
-function dayMsCal(cal){let m=0;cal.week.forEach(w=>{if(w.working){let s=0;for(const[a,b]of w.times)s+=b-a;m=Math.max(m,s)}});return m||288e5}
-function posInDay(cal,d){const w=cal.week.get(d.getDay()+1);if(!dayStatus(cal,d)||!w)return dayWorkMs(cal,d);
-  const ms=msOfDay(d);let acc=0;for(const[a,b]of w.times){if(ms>=b)acc+=b-a;else if(ms>a)acc+=ms-a}return acc}
+function dayWorkingTimes(cal,d){const e=exceptionForDay(cal,d);if(e&&e.working&&e.times.length)return e.times;
+  if(e&&!e.working)return[];
+  const w=cal.week.get(d.getDay()+1);return w&&w.working?w.times:[];
+}
+function dayWorkMs(cal,d){let m=0;for(const[a,b]of dayWorkingTimes(cal,d))m+=b-a;return m}
+function dayMsCal(cal){let m=0;cal.week.forEach(w=>{if(w.working){let s=0;for(const[a,b]of w.times)s+=b-a;m=Math.max(m,s)}});for(const e of cal.exc){if(e.working&&e.times.length){let s=0;for(const[a,b]of e.times)s+=b-a;m=Math.max(m,s)}}return m||288e5}
+function posInDay(cal,d){const times=dayWorkingTimes(cal,d);if(!times.length)return 0;
+  const ms=msOfDay(d);let acc=0;for(const[a,b]of times){if(ms>=b)acc+=b-a;else if(ms>a)acc+=ms-a}return acc}
 function snapWork(cal,d){d=new Date(d);
-  for(let i=0;i<370;i++){if(dayStatus(cal,d)){const w=cal.week.get(d.getDay()+1);
-    if(w){const ms=msOfDay(d);for(const[a,b]of w.times)if(ms<b)return ms<a?new Date(+d-ms+a):new Date(d)}}
+  for(let i=0;i<370;i++){const times=dayWorkingTimes(cal,d);
+    if(times.length){const ms=msOfDay(d);for(const[a,b]of times)if(ms<b)return ms<a?new Date(+d-ms+a):new Date(d)}
     d=new Date(d.getFullYear(),d.getMonth(),d.getDate()+1)}
   return d}
-function instantAt(cal,dayStart,pos){const w=cal.week.get(new Date(dayStart).getDay()+1);let acc=0;
-  for(const[a,b]of w.times){const l=b-a;if(pos<=acc+l)return dayStart+a+(pos-acc);acc+=l}
+function instantAt(cal,dayStart,pos){const times=dayWorkingTimes(cal,new Date(dayStart));let acc=0;
+  for(const[a,b]of times){const l=b-a;if(pos<=acc+l)return dayStart+a+(pos-acc);acc+=l}
   return dayStart+864e5-1}
 function addWork(cal,start,ms){let cur=snapWork(cal,start),rem=ms;
   for(let i=0;i<20000&&rem>0;i++){const av=dayWorkMs(cal,cur)-posInDay(cal,cur);
@@ -177,9 +224,9 @@ function subWork(cal,end,ms){let cur=new Date(end);
   return cur}
 function workDiff(cal,a,b){a=new Date(a);b=new Date(b);if(+b<=+a)return 0;let tot=0;const e=b;
   for(let d=new Date(a.getFullYear(),a.getMonth(),a.getDate());+d<=+e;d.setDate(d.getDate()+1)){
-    if(!dayStatus(cal,d))continue;const w=cal.week.get(d.getDay()+1);if(!w)continue;
+    const times=dayWorkingTimes(cal,d);if(!times.length)continue;
     const ds=+d,de=ds+864e5-1,lo=Math.max(+a,ds),hi=Math.min(+b,de);
-    for(const[x,y]of w.times){const s=Math.max(lo,ds+x),ee=Math.min(hi,ds+y);if(ee>s)tot+=ee-s}}
+    for(const[x,y]of times){const s=Math.max(lo,ds+x),ee=Math.min(hi,ds+y);if(ee>s)tot+=ee-s}}
   return tot}
 function effCal(uid){const chain=[];let u=uid,n=0;
   while(u!=null&&u!=='-1'&&cals[u]&&n++<10){chain.unshift(cals[u]);u=cals[u].base}
@@ -191,7 +238,16 @@ function calOf(t){return t.cal||effCal(defCalUid)}
 function applyCals(){defCalUid=($('calSel')&&$('calSel').value)||projCalUid;
   tasks.forEach(t=>t.cal=t.v.CalendarUID&&cals[t.v.CalendarUID]?effCal(t.v.CalendarUID):effCal(defCalUid));
   dayH=Math.max(1,dayMsCal(effCal(defCalUid))/36e5)}
-function durMs(t){const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');return m?(+m[1]*60+ +m[2])*60000:0}
+function durationHours(raw){
+  if(raw===undefined||raw===null||raw==='')return null;
+  const s=String(raw).trim();
+  if(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s))return Number(s)/36e5;
+  const m=/^(-)?P(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/.exec(s);
+  if(!m||!m.slice(2).some(v=>v!==undefined))return null;
+  return(m[1]?-1:1)*((+m[2]||0)*168+(+m[3]||0)*24+(+m[4]||0)+(+m[5]||0)/60+(+m[6]||0)/3600);
+}
+function durationMs(raw){const h=durationHours(raw);return h===null?0:h*36e5}
+function durMs(t){return durationMs(t.v.Duration)}
 const wdays=(t,a,b)=>useCal()?workDiff(calOf(t),a,b)/dayMsCal(calOf(t)):(+b-+a)/DAY;
 function useCst(){return !!($('useC')&&$('useC').checked)}
 function applyCst(t,s,c){if(!useCst())return s;
@@ -209,9 +265,11 @@ function sdDate(){const m=/^(\d{4})-(\d{2})-(\d{2})/.exec($('sd').value||'');ret
 
 function detect(k){
   const vs=tasks.map(t=>t.v[k]).filter(x=>x!==undefined&&x!=='');
+  if(/^Baseline\d*(Start|Finish)$/.test(k))return'date';
+  if(/Duration$/.test(k))return'dur';
+  if(k==='_sv'||k==='_fv')return'num';
   if(BOOL.has(k))return'bool';if(k==='_nd')return'dur';if(!vs.length)return'txt';
   if(vs.every(v=>/^\d{4}-\d\d-\d\dT/.test(v)))return'date';
-  if(vs.every(v=>/^PT\d+H\d+M/.test(v)))return'dur';
   if(vs.every(v=>!isNaN(v)))return'num';
   return'txt';
 }
@@ -230,16 +288,29 @@ function parse(txt){
       if(wts)kids(wts,'WorkingTime').forEach(t=>times.push([tms(g(t,'FromTime')),tms(g(t,'ToTime'))]));
       week.set(+g(w,'DayType'),{working:g(w,'DayWorking')==='1',times})});
     const exs=kids(c,'CalendarExceptions')[0];
-    if(exs)kids(exs,'CalendarException').forEach(e=>{const tp=kids(e,'TimePeriod')[0];if(!tp)return;
-      const f=new Date(g(tp,'FromDate')),t2=new Date(g(tp,'ToDate'));if(isNaN(+f)||isNaN(+t2))return;
-      f.setHours(0,0,0,0);t2.setHours(23,59,59,999);
-      exc.push({from:+f,to:+t2,working:g(e,'Working')==='1',name:g(e,'Name')||''})});
+    if(exs)kids(exs,'CalendarException').forEach(e=>{
+      const tp=kids(e,'TimePeriod')[0];
+      if(!tp&&+g(e,'Type')<=0)return;
+      const fs=tp?g(tp,'FromDate'):g(e,'FromDate'),ts=tp?g(tp,'ToDate'):g(e,'ToDate');
+      const f=fs?new Date(fs):new Date(0),t2=ts?new Date(ts):null;
+      if(!fs||isNaN(+f))return;
+      f.setHours(0,0,0,0);if(t2)t2.setHours(23,59,59,999);
+      const times=[];const wts=kids(e,'WorkingTimes')[0];
+      if(wts)kids(wts,'WorkingTime').forEach(t=>times.push([tms(g(t,'FromTime')),tms(g(t,'ToTime'))]));
+      const type=+g(e,'Type')||0,period=+g(e,'Period')||1,occurrences=+g(e,'Occurrences')||0;
+      const daysOfWeek=+g(e,'DaysOfWeek')||0,month=+g(e,'Month')||0;
+      const monthDay=+g(e,'MonthDay')||0,monthPosition=+g(e,'MonthPosition')||0;
+      let weekDay=0;if(daysOfWeek)for(let i=0;i<7;i++)if(daysOfWeek&(1<<i)){weekDay=i+1;break}
+      const recur=type>0||period>1||occurrences>0||daysOfWeek>0||month>0||monthDay>0||monthPosition>0;
+      exc.push({from:+f,to:t2?+t2:(recur?null:+f),working:g(e,'Working')==='1',name:g(e,'Name')||'',
+        recur,times,type,period,occurrences,daysOfWeek,month,monthDay,monthPosition,weekDay})});
     cals[uid]={uid,name:g(c,'Name')||('Calendrier '+uid),base:g(c,'BaseCalendarUID'),week,exc}});
   projCalUid=g(x.documentElement,'CalendarUID')||Object.keys(cals)[0]||null;defCalUid=projCalUid;
   $('calSel').innerHTML=Object.values(cals).map(c=>`<option value="${esc(c.uid)}"${c.uid===projCalUid?' selected':''}>${esc(c.name)}</option>`).join('');
   $('calOn').checked=Object.keys(cals).length>0;
-  const nexc=Object.values(cals).reduce((a,c)=>a+c.exc.filter(e=>!e.working).length,0);
-  $('calInfo').textContent=Object.keys(cals).length?`${Object.keys(cals).length} calendrier(s) · ${nexc} jour(s) non travaillé(s) dans le fichier`:'Aucun calendrier dans le fichier : calcul en jours calendaires';
+  const nexc=Object.values(cals).reduce((a,c)=>a+c.exc.filter(e=>!e.working&&(!e.recur||e.occurrences)).length,0);
+  const nrec=Object.values(cals).reduce((a,c)=>a+c.exc.filter(e=>e.recur).length,0);
+  $('calInfo').textContent=Object.keys(cals).length?`${Object.keys(cals).length} calendrier(s) · ${nexc} exception(s) fermée(s) · ${nrec} exception(s) récurrente(s)`:'Aucun calendrier dans le fichier : calcul en jours calendaires';
   doc=x;tasks=[];roots=[];byUid={};collapsed=new Set();selUid=null;const keys=[];
   kids(root,'Task').forEach(e=>{
     const uid=g(e,'UID'),v={};
@@ -262,7 +333,11 @@ function parse(txt){
   const maxL=Math.max(...tasks.filter(t=>t.kids.length).map(t=>t.lvl),0)+1;
   $('lv').innerHTML='Niveaux : '+Array.from({length:maxL},(_,i)=>`<button data-l="${i+1}">${i+1}</button>`).join('')+'<button data-l="0">Tout</button>';
   applyCals();
-  ['_ns','_nf','_nd','_dl','_al'].forEach(k=>keys.push(k));
+  ['BaselineStart','BaselineFinish','BaselineDuration','_ns','_nf','_nd','_dl','_sv','_fv','_al'].forEach(k=>keys.includes(k)||keys.push(k));
+  keys.filter(k=>/^Baseline\d+(Start|Finish|Duration)$/.test(k)).forEach(k=>{
+    const m=/^Baseline(\d+)(Start|Finish|Duration)$/.exec(k);
+    LAB[k]=`${m[2]==='Start'?'Début':m[2]==='Finish'?'Fin':'Durée'} baseline ${m[1]}`;
+  });
   if(!keys.includes('_pred'))keys.push('_pred');
   if(!keys.includes('_succ'))keys.push('_succ');
   tasks.forEach(t=>t.v._al='');
@@ -317,10 +392,29 @@ function detailText(t){
 }
 function labelHTML(t,x){
   const tx=detailText(t);if(!tx)return'';
-  return`<span class="lb" style="left:${x(Math.max(+t.nf,$('showO').checked?+t.f:0))+(t.ms?10:6)}px">${esc(tx)}</span>`;
+  const bf=baselineVisible()?(baselineOf(t)?.f||0):0;
+  return`<span class="lb" style="left:${x(Math.max(+t.nf,$('showO').checked?+t.f:0,bf))+(t.ms?10:6)}px">${esc(tx)}</span>`;
 }
+function baselineFields(slot=+$('baseSlot').value){const p=slot?`Baseline${slot}`:'Baseline';return{start:p+'Start',finish:p+'Finish',duration:p+'Duration'}}
+function baselineOf(t,slot=+$('baseSlot').value){
+  const keys=baselineFields(slot),raw=t.v[keys.start];
+  if(!raw)return null;
+  const s=new Date(raw),f=new Date(t.v[keys.finish]||raw);
+  return Number.isFinite(+s)&&Number.isFinite(+f)?{s,f}:null;
+}
+const hasBaseline=(slot=+$('baseSlot').value)=>{const k=baselineFields(slot);return tasks.some(t=>t.v[k.start]||t.v[k.finish]||t.v[k.duration])};
+const baselineVisible=()=>$('showB').checked&&hasBaseline();
+function chartRange(){
+  const ds=[];
+  tasks.forEach(t=>{
+    ds.push(+t.s,+t.f,+t.ns,+t.nf);
+    if(baselineVisible()){const b=baselineOf(t);if(b)ds.push(+b.s,+b.f)}
+  });
+  return[Math.min(...ds),Math.max(...ds)];
+}
+function signedDays(t,from,to){return +to>=+from?wdays(t,from,to):-wdays(t,to,from)}
 function getPPD(){
-  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+  const[t0,t1]=chartRange();
   const mx=48,mn=Math.min(mx,Math.max(0.02,($('R').clientWidth-90)/Math.max(1,(t1-t0)/DAY)));
   return mn*Math.pow(mx/mn,(+$('zoom').value)/100);
 }
@@ -366,6 +460,9 @@ function compute(k,mode){
   }
   tasks.forEach(t=>{
     t.v._ns=iso(t.ns);t.v._nf=iso(t.nf);t.v._dl=String(wdays(t,t.f,t.nf));
+    const b=baselineOf(t);
+    t.v._sv=b?String(signedDays(t,b.s,t.s)):'';
+    t.v._fv=b?String(signedDays(t,b.f,t.f)):'';
     const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');
     t.v._nd=m&&!t.kids.length?String((+m[1]+m[2]/60)*k):'';
   });
@@ -377,15 +474,26 @@ function compute(k,mode){
 
 /* ---- Édition du planning (ajout/suppression/déplacement/liens) + undo/redo ---- */
 const NS='http://schemas.microsoft.com/project';
-const NOEDIT=new Set(['UID','Summary','OutlineLevel','_res','_ns','_nf','_nd','_dl','_al']);
+const NOEDIT=new Set(['UID','Summary','OutlineLevel','BaselineStart','BaselineFinish','BaselineDuration','_res','_ns','_nf','_nd','_dl','_sv','_fv','_al']);
 const isEdit=k=>!NOEDIT.has(k);
 function rebuildTree(){tasks.forEach(t=>t.kids=[]);roots=[];const st=[];
   tasks.forEach(t=>{while(st.length&&st.at(-1).lvl>=t.lvl)st.pop();t.parent=st.at(-1)||null;(t.parent?t.parent.kids:roots).push(t);st.push(t)})}
+function renumberHierarchy(){
+  let rootIndex=0;
+  const walk=(list,prefix)=>{
+    list.forEach((t,i)=>{
+      const num=prefix?prefix+'.'+(i+1):String(++rootIndex);
+      t.v.WBS=num;t.v.OutlineNumber=num;
+      t.v.OutlineLevel=String(t.lvl);walk(t.kids,num);
+    })
+  };walk(roots,'');
+  tasks.forEach((t,i)=>{if(!t.v.ID)t.v.ID=String(i+1)});
+}
 function snap(){return JSON.stringify({sel:selUid,tasks:tasks.map(t=>({uid:t.uid,v:t.v,lvl:t.lvl,s:+t.s,f:+t.f,ms:t.ms,sum:t.sum,preds:t.preds}))})}
 function saveHist(){hist.splice(hidx+1);hist.push(snap());if(hist.length>100)hist.shift();hidx=hist.length-1}
 function restore(i){if(i<0||i>=hist.length)return;const st=JSON.parse(hist[i]);hidx=i;const old=byUid;
   tasks=st.tasks.map(o=>({uid:o.uid,v:o.v,lvl:o.lvl,sum:o.sum,ms:o.ms,s:new Date(o.s),f:new Date(o.f),kids:[],parent:null,preds:o.preds,el:old[o.uid]?old[o.uid].el:null}));
-  byUid={};tasks.forEach(t=>byUid[t.uid]=t);rebuildTree();syncDom();selUid=st.sel;render()}
+  byUid={};tasks.forEach(t=>byUid[t.uid]=t);rebuildTree();refreshLinks();syncDom();selUid=st.sel;render()}
 function undo(){if(hidx>0)restore(hidx-1)}
 function redo(){if(hidx<hist.length-1)restore(hidx+1)}
 function setEl(t,n,val){let e=kids(t.el,n)[0];if(!e){e=doc.createElementNS(NS,n);t.el.appendChild(e)}e.textContent=val==null?'':String(val)}
@@ -393,6 +501,7 @@ function syncTaskEl(t){
   const core=['UID','ID','Name','OutlineLevel','Summary','Milestone','Start','Finish','Duration','PercentComplete','CalendarUID','Notes','Priority','WBS','OutlineNumber','ConstraintType','ConstraintDate','Deadline'];
   core.forEach(k=>{if(t.v[k]!==undefined)setEl(t,k,t.v[k])});
   Object.keys(t.v).forEach(k=>{if(k[0]!=='_'&&!core.includes(k))setEl(t,k,t.v[k])});
+  for(let i=0;i<=10;i++){const f=baselineFields(i);Object.values(f).forEach(k=>{if(t.v[k]===undefined)kids(t.el,k).forEach(e=>e.remove())})}
   setEl(t,'UID',t.uid);setEl(t,'OutlineLevel',String(t.lvl));setEl(t,'Summary',t.kids.length?'1':'0');
   setEl(t,'Start',iso(t.s));setEl(t,'Finish',iso(t.f));
   kids(t.el,'PredecessorLink').forEach(e=>e.remove());
@@ -414,7 +523,7 @@ function addTask(){if(!doc)return;
   if(sel&&sel.v.CalendarUID)v.CalendarUID=sel.v.CalendarUID;
   const t={uid,v,lvl,sum:false,ms:false,s,f,kids:[],parent:null,preds:[],el:null};
   let idx=tasks.length;if(sel){idx=tasks.indexOf(sel)+1;while(idx<tasks.length&&tasks[idx].lvl>sel.lvl)idx++}
-  tasks.splice(idx,0,t);byUid[uid]=t;rebuildTree();syncDom();selUid=uid;saveHist();render()}
+  tasks.splice(idx,0,t);byUid[uid]=t;rebuildTree();renumberHierarchy();syncDom();selUid=uid;saveHist();render()}
 function delTask(){if(!doc)return;const sel=new Set(multi);if(selUid)sel.add(selUid);
   const list=[...sel].map(u=>byUid[u]).filter(Boolean);if(!list.length)return;
   const doomed=new Set();const collect=x=>{doomed.add(x.uid);x.kids.forEach(collect)};list.forEach(collect);
@@ -422,13 +531,13 @@ function delTask(){if(!doc)return;const sel=new Set(multi);if(selUid)sel.add(sel
   tasks.forEach(x=>x.preds=x.preds.filter(p=>!doomed.has(p.uid)));
   Object.keys(byUid).forEach(u=>{if(doomed.has(u))delete byUid[u]});
   multi=new Set();if(selUid&&doomed.has(selUid))selUid=null;
-  rebuildTree();syncDom();refreshLinks();saveHist();render()}
+  rebuildTree();renumberHierarchy();syncDom();refreshLinks();saveHist();render()}
 function moveTask(dir){const t=byUid[selUid];if(!doc||!t)return;const sib=t.parent?t.parent.kids:roots;const i=sib.indexOf(t),j=i+dir;
   if(j<0||j>=sib.length)return;sib.splice(i,1);sib.splice(j,0,t);
-  tasks=[];const walk=r=>r.forEach(x=>{tasks.push(x);walk(x.kids)});walk(roots);syncDom();saveHist();render()}
+  tasks=[];const walk=r=>r.forEach(x=>{tasks.push(x);walk(x.kids)});walk(roots);renumberHierarchy();syncDom();saveHist();render()}
 function indent(){const t=byUid[selUid];if(!doc||!t)return;const i=tasks.indexOf(t);
-  if(i<=0||tasks[i-1].lvl<t.lvl)return;t.lvl++;rebuildTree();syncDom();saveHist();render()}
-function outdent(){const t=byUid[selUid];if(!doc||!t||t.lvl<=1)return;t.lvl--;rebuildTree();syncDom();saveHist();render()}
+  if(i<=0||tasks[i-1].lvl<t.lvl)return;t.lvl++;rebuildTree();renumberHierarchy();syncDom();saveHist();render()}
+function outdent(){const t=byUid[selUid];if(!doc||!t||t.lvl<=1)return;t.lvl--;rebuildTree();renumberHierarchy();syncDom();saveHist();render()}
 /* ---- Copier / coller / dupliquer des tâches (avec descendants et liens internes) ---- */
 function selTree(){const sel=new Set(multi);if(selUid)sel.add(selUid);
   const list=[...sel].map(u=>byUid[u]).filter(Boolean);if(!list.length)return null;
@@ -449,7 +558,7 @@ function pasteTasks(){if(!clip||!clip.length||!doc)return;
   let idx=tasks.length;
   if(sel){idx=tasks.indexOf(sel)+1;while(idx<tasks.length&&tasks[idx].lvl>sel.lvl)idx++}
   tasks.splice(idx,0,...news);news.forEach(t=>byUid[t.uid]=t);
-  rebuildTree();syncDom();refreshLinks();selUid=news[0].uid;multi=new Set();saveHist();render()}
+  rebuildTree();renumberHierarchy();syncDom();refreshLinks();selUid=news[0].uid;multi=new Set();saveHist();render()}
 function dupTasks(){copyTasks();pasteTasks()}
 function parseDurInput(s){s=s.trim().toLowerCase();let m;
   if(m=/^(\d+(?:[.,]\d+)?)\s*j/.exec(s))return +m[1].replace(',','.')*dayH;
@@ -468,8 +577,11 @@ function parsePreds(s,t){if(!s.trim())return[];const out=[];
     const l=parseFloat(String(m[3]||'0').replace(',','.'));
     out.push({uid:q.uid,type:ty,lag:l*(useCal()?dayMsCal(calOf(t)):dayH*36e5)})}
   return out}
-function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return;
-  if((k==='Duration'||k==='Start'||k==='Finish')&&t.kids.length){err('Tâche récapitulative : modifiez ses tâches filles.');return}
+function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return false;
+  if((k==='Duration'||k==='Start'||k==='Finish'||k==='PercentComplete')&&t.kids.length){err('Tâche récapitulative : modifiez ses tâches filles.');return false}
+  if(k==='Name'&&(!raw||raw.length>255)){err('Nom invalide (1 à 255 caractères).');return false}
+  const oldPreds=t.preds.map(p=>({...p}));
+  const predSnapshots=tasks.map(q=>({q,preds:q.preds.map(p=>({...p}))}));
   const uc=useCal(),c=cols.find(c=>c.k===k);
   if(k==='Name')t.v.Name=raw;
   else if(k==='Duration'){const h=parseDurInput(raw);if(h===null||h<0){err('Durée invalide (ex : 3j, 24h, PT8H0M)');return}
@@ -479,10 +591,12 @@ function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return;
   else if(k==='Finish'){const d=parseDateFr(raw);if(!d){err('Date invalide (jj/mm/aaaa)');return}
     t.f=d;const h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/(36e5*dayH);t.v.Duration=durPT(Math.max(0,h))}
   else if(k==='PercentComplete')t.v.PercentComplete=String(Math.max(0,Math.min(100,parseInt(raw,10)||0)));
-  else if(k==='_pred'){const ps=parsePreds(raw,t);if(ps===null){err('Prédécesseurs invalides (ex : 1FD, 2FF+1j)');return}t.preds=ps}
-  else if(k==='_succ'){const ps=parseSucc(raw,t);if(ps===null){err('Successeurs invalides (ex : 3FD, 4FF+2j)');return}
+  else if(k==='_pred'){const ps=parsePreds(raw,t);if(ps===null){err('Prédécesseurs invalides (ex : 1FD, 2FF+1j)');return false}t.preds=ps;
+    if(linkGraphHasCycle()){t.preds=oldPreds;err('Lien refusé : cela créerait une boucle dans le planning.');return false}}
+  else if(k==='_succ'){const ps=parseSucc(raw,t);if(ps===null){err('Successeurs invalides (ex : 3FD, 4FF+2j)');return false}
     tasks.forEach(q=>{if(q.uid!==t.uid)q.preds=q.preds.filter(p=>p.uid!==t.uid)});
-    for(const o of ps){const q=byUid[o.uid];if(q&&!q.preds.some(p=>p.uid===t.uid)){q.preds.push({uid:t.uid,type:o.type,lag:o.lag});syncTaskEl(q)}}}
+    for(const o of ps){const q=byUid[o.uid];if(q&&!q.preds.some(p=>p.uid===t.uid)){q.preds.push({uid:t.uid,type:o.type,lag:o.lag});syncTaskEl(q)}}
+    if(linkGraphHasCycle()){predSnapshots.forEach(({q,preds})=>q.preds=preds);err('Lien refusé : cela créerait une boucle dans le planning.');return false}}
   else if(c&&c.type==='date'){const d=parseDateFr(raw);if(!d){err('Date invalide (jj/mm/aaaa)');return}t.v[k]=iso(d)}
   else if(k==='ConstraintType'&&isNaN(parseFloat(raw))){const i=CT.findIndex(x=>x.toLowerCase()===raw.toLowerCase());if(i<0){err('Type de contrainte inconnu');return}t.v[k]=String(i)}
   else if(c&&c.type==='num'){const n=parseFloat(raw.replace(',','.'));if(isNaN(n)){err('Nombre invalide');return}t.v[k]=String(n)}
@@ -491,7 +605,7 @@ function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return;
   else t.v[k]=raw;
   if(k==='Milestone'){t.ms=t.v.Milestone==='1';if(t.ms)t.f=new Date(t.s)}
   t.v.Start=iso(t.s);t.v.Finish=iso(t.f);t.v.OutlineLevel=String(t.lvl);
-  refreshLinks();syncTaskEl(t)}
+  refreshLinks();syncTaskEl(t);return true}
 function refreshLinks(){tasks.forEach(t=>{
   const lab=(id,p)=>{const l=p.lag/60000/60/dayH;return id+['FF','FD','DF','DD'][p.type]+(l?(l>0?'+':'')+Math.round(l*10)/10+'j':'')};
   t.v._pred=t.preds.map(p=>lab(byUid[p.uid]?byUid[p.uid].v.ID:p.uid,p)).join(', ');
@@ -501,6 +615,17 @@ function parseSucc(s,t){if(!s.trim())return[];const out=[];
     const q=tasks.find(x=>x.v.ID===m[1]);if(!q||q.uid===t.uid)return null;
     out.push({uid:q.uid,type:{ff:0,fd:1,df:2,dd:3}[m[2].toLowerCase()],lag:parseFloat(String(m[3]||'0').replace(',','.'))*(useCal()?dayMsCal(calOf(t)):dayH*36e5)})}
   return out}
+function linkGraphHasCycle(){
+  const color=new Map();
+  const visit=u=>{
+    if(color.get(u)==='1')return true;
+    if(color.get(u)==='2')return false;
+    color.set(u,'1');
+    const t=byUid[u];if(t)for(const p of t.preds)if(p.uid&&byUid[p.uid]&&visit(p.uid))return true;
+    color.set(u,'2');return false;
+  };
+  return tasks.some(t=>color.get(t.uid)!=='2'&&visit(t.uid));
+}
 function setTaskDates(t,s,f){t.s=new Date(s);t.f=new Date(t.ms?t.s:f);
   const uc=useCal(),h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/(36e5*dayH);
   if(!t.ms&&h>=0)t.v.Duration=durPT(h);
@@ -524,14 +649,17 @@ function linkBars(a,b,type,lag){const A=byUid[a],B=byUid[b];if(!A||!B||a===b)ret
   while(st.length){const u=st.pop(),q=byUid[u];if(!q)continue;
     for(const p of q.preds){if(p.uid===b)return false;if(!seen.has(p.uid)){seen.add(p.uid);st.push(p.uid)}}}
   if(B.preds.some(p=>p.uid===a))return false;
-  saveHist();B.preds.push({uid:a,type:type??1,lag:lag||0});refreshLinks();syncTaskEl(B);render();return true}
+  B.preds.push({uid:a,type:type??1,lag:lag||0});
+  if(linkGraphHasCycle()){B.preds.pop();err('Lien refusé : cela créerait une boucle dans le planning.');return false}
+  saveHist();
+  refreshLinks();syncTaskEl(B);render();return true}
 function rawVal(t,k){if(k==='Start')return fd(t.s);if(k==='Finish')return fd(t.f);if(k==='_pred')return t.v._pred||'';if(k==='_succ')return t.v._succ||'';
   const c=cols.find(c=>c.k===k);
   if(c&&c.type==='date'&&t.v[k])return fd(new Date(t.v[k]));
   return c?fmt(c,t.v[k]||''):(t.v[k]||'')}
 function startEdit(td,t,k){if(td.querySelector('input'))return;selUid=t.uid;const inp=document.createElement('input');inp.value=rawVal(t,k);inp.style.cssText='width:100%;padding:2px 4px';
   td.textContent='';td.appendChild(inp);inp.focus();inp.select();let done=0;
-  inp.onblur=()=>{if(done)return;done=1;applyEdit(t,k,inp.value);saveHist();render()};
+  inp.onblur=()=>{if(done)return;done=1;if(applyEdit(t,k,inp.value)){saveHist();render()}else{render()}};
   inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();inp.blur()}else if(e.key==='Escape'){done=1;render()}}}
 
 function fmt(c,r){
@@ -541,7 +669,7 @@ function fmt(c,r){
     case'dur':{const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);
       return c.unit==='j'?Math.round(h/dayH*10)/10+' j':Math.round(h*10)/10+' h'}
     case'bool':return r==='1'?'Oui':'Non';
-    case'num':return c.k==='_dl'?(+r).toFixed(1):c.k==='ConstraintType'?(CT[r]||r):c.k==='PercentComplete'?r+' %':r;
+    case'num':return c.k==='_dl'||c.k==='_sv'||c.k==='_fv'?((+r>0?'+':'')+(+r).toFixed(1)+' j'):c.k==='ConstraintType'?(CT[r]||r):c.k==='PercentComplete'?r+' %':r;
   }
   return r;
 }
@@ -619,12 +747,14 @@ function render(){
     const d=c.k==='PercentComplete'&&o.kids.length?esc(Math.round(o.pct)+' %'):esc(fmt(c,o.v[c.k]));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(o.lvl-1)*16}px"`;
       inner=`<span class="tg"${o.kids.length?` data-u="${o.uid}"`:''}>${o.kids.length?(collapsed.has(o.uid)?'▶':'▼'):''}</span>`+d}
-    return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl)$/.test(c.k)?' mg':''}" title="${d}${isEdit(c.k)?' — double-clic pour modifier':''}"${pad}${isEdit(c.k)?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
-  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+    return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl|sv|fv)$/.test(c.k)?' mg':''}" title="${d}${isEdit(c.k)?' — double-clic pour modifier':''}"${pad}${isEdit(c.k)?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
+  const[t0,t1]=chartRange();
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
   const dl=Math.round(wdays({cal:effCal(defCalUid)},oE,nE)),nLate=tasks.filter(t=>!t.kids.length&&t.pct<100&&+sd>+t.nf).length;
-  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span><span><b>${rs.filter(o=>!o.hdr).length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCst()?`<span>Alertes <b>${tasks.filter(t=>!t.kids.length&&t.warn).length}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${multi.size?`<span>Sélection : <b>${multi.size} tâche(s)</b></span>`:selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
+  const bE=Math.max(...tasks.map(t=>baselineOf(t)?.f??-Infinity)),slot=+$('baseSlot').value;
+  const baseStat=Number.isFinite(bE)?`<span>Fin référence ${slot||0} <b>${fd(new Date(bE))}</b> · écart <b>${signedDays({cal:effCal(defCalUid)},new Date(bE),new Date(oE))>0?'+':''}${signedDays({cal:effCal(defCalUid)},new Date(bE),new Date(oE)).toFixed(1)} j</b></span>`:'';
+  $('stats').innerHTML=`<span>Fin initiale <b>${fd(new Date(oE))}</b></span><span>Fin avec marge <b>${fd(new Date(nE))}</b></span><span>Décalage <b>+${dl} j${useCal()?' ouvrés':''}</b></span>${baseStat}<span><b>${rs.filter(o=>!o.hdr).length}</b> / ${tasks.length} lignes affichées · ×${k}</span>${$('showP').checked?`<span>En retard <b>${nLate}</b></span>`:''}${useCst()?`<span>Alertes <b>${tasks.filter(t=>!t.kids.length&&t.warn).length}</b></span>`:''}${useCal()?`<span>Calendrier <b>${esc((cals[defCalUid]||{}).name||defCalUid||'—')}</b></span>`:''}${multi.size?`<span>Sélection : <b>${multi.size} tâche(s)</b></span>`:selUid&&byUid[selUid]?`<span>Sélection : <b>${esc(byUid[selUid].v.Name)}</b></span>`:''}`;
   let h=`<div style="width:${W}px;position:relative"><div class="gh">`;
   const c=new Date(t0);c.setDate(1);const first=+c;
   for(;+c<=t1;c.setMonth(c.getMonth()+1))if(ppd>=1||c.getMonth()===0||+c===first)h+=`<div class="mo" style="left:${x(c)}px">${c.getMonth()===0||+c===first?`<b>${c.getFullYear()}</b>`:''}<span>${ppd>=1?c.toLocaleDateString('fr-FR',{month:'short'}):''}</span></div>`;
@@ -635,8 +765,12 @@ function render(){
   h+=shd+'</div>'+shd;
   rs.forEach(t=>{
     if(t.hdr){h+=`<div class="grh">${esc(t.hdr)} <em>(${t.n})</em></div>`;return}
-    const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}`;
+    const base=baselineOf(t);
+    const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}${base?`\nRéférence : ${fd(base.s)} → ${fd(base.f)}`:''}`;
     let b='';const cc=clsOf(t);
+    if(baselineVisible()&&base){
+      if(t.ms)b+=`<i class="m bl" style="left:${x(base.s)-3}px"></i>`;
+      else b+=`<i class="bl" style="left:${x(base.s)}px;width:${Math.max(2,(base.f-base.s)/DAY*ppd)}px"></i>`}
     if(t.ms){if(showO)b+=`<i class="m o" style="left:${x(t.s)-4}px"></i>`;b+=`<i class="m n${cc}" style="left:${x(t.ns)-5}px"></i>`}
     else{if(showO)b+=`<i class="o" style="left:${x(t.s)}px;width:${Math.max(2,(t.f-t.s)/DAY*ppd)}px"></i>`;
       b+=`<i class="n${cc}" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`;
@@ -658,9 +792,27 @@ function render(){
     return s})();
   $('R').innerHTML=h+lk+td+pl+'</div>';
   $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;$('bpptx').disabled=!doc;
+  $('bBase').disabled=!doc;$('bBaseClear').disabled=!hasBaseline();
   if($('bAdd')){$('bAdd').disabled=!doc;['bDel','bUp','bDn','bInd','bOut'].forEach(i=>$(i).disabled=!doc||!selUid);
     $('bUn').disabled=!(hidx>0);$('bRe').disabled=!(hidx<hist.length-1)}
 }
+function defineBaseline(){
+  if(!doc)return;
+  const f=baselineFields();
+  tasks.forEach(t=>{
+    t.v[f.start]=iso(t.s);t.v[f.finish]=iso(t.f);
+    t.v[f.duration]=t.v.Duration||'PT0H0M0S';
+  });
+  syncDom();saveHist();render();
+}
+function clearBaseline(){
+  if(!hasBaseline())return;
+  const f=baselineFields();
+  tasks.forEach(t=>{delete t.v[f.start];delete t.v[f.finish];delete t.v[f.duration]});
+  syncDom();saveHist();render();
+}
+$('bBase').onclick=defineBaseline;$('bBaseClear').onclick=clearBaseline;
+$('baseSlot').onchange=render;
 
 /* ---- Menu de filtre façon Excel ---- */
 let menu=null;
@@ -749,7 +901,7 @@ function linkPaths(rs,x,y0){
 /* ---- Export HTML / PDF : image fidèle de la vue courante ---- */
 function buildSVG(){
   const vc=vcols(),rs=rows(),ppd=getPPD(),show=$('showO').checked,k=+$('k').value||1;
-  const t0=Math.min(...tasks.map(t=>Math.min(+t.s,+t.ns))),t1=Math.max(...tasks.map(t=>Math.max(+t.f,+t.nf)));
+  const[t0,t1]=chartRange();
   const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const y0=TOP+HH,H=y0+rs.length*RH+4,x=d=>GX+(d-t0)/DAY*ppd+8;
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
@@ -781,6 +933,10 @@ function buildSVG(){
       let d=fmt(c,t.v[c.k]),ix=6;const nu=['num','dur'].includes(c.type);
       if(c.k==='Name'){ix=6+(t.lvl-1)*16;if(sm)d=(collapsed.has(t.uid)?'▶ ':'▼ ')+d;else ix+=14}
       tx+=cell(xs[j],ry,c.w-2,RH,`<text x="${nu?c.w-8:ix}" y="17"${nu?' text-anchor="end"':''}${sm?' font-weight="600"':''} fill="${/^_(ns|nf|nd|dl)$/.test(c.k)?'#2f6fba':'#1d2b2a'}">${esc(d)}</text>`)});
+    const base=baselineOf(t);
+    if(baselineVisible()&&base){
+      if(t.ms)bars+=dia(x(base.s),ry+2,3.5,'#d9791c');
+      else bars+=`<rect x="${x(base.s)}" y="${ry+1}" width="${Math.max(2,(base.f-base.s)/DAY*ppd)}" height="3" fill="none" stroke="#d9791c" stroke-dasharray="4 3"/>`}
     if(t.ms){if(show)bars+=dia(x(t.s),ry+6,4,'#aab4b2');bars+=dia(x(t.ns),ry+17,5.5,clc(t)||'#d9791c')}
     else{
       if(show)bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(2,(t.f-t.s)/DAY*ppd)}" height="6" rx="3" fill="#aab4b2"/>`;
@@ -817,13 +973,28 @@ $('bc').onclick=()=>{
 };
 $('bx').onclick=()=>{
   const k=+$('k').value||1;
+  const out=doc.cloneNode(true);
+  const outTasks=[...out.getElementsByTagNameNS('*','Task')];
   tasks.forEach(t=>{
-    const set=(n,v)=>{const e=kids(t.el,n)[0];if(e)e.textContent=v};
+    const el=outTasks.find(e=>g(e,'UID')===t.uid);
+    if(!el)return;
+    const set=(n,v)=>{const e=kids(el,n)[0];if(e)e.textContent=v};
     set('Start',iso(t.ns));set('Finish',iso(t.nf));
-    if(!t.kids.length&&!t.ms){const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
-      if(m){const mins=Math.round((+m[1]*60+ +m[2])*k);set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`)}}
+    set('ConstraintDate',t.v.ConstraintDate||'');
+    set('Deadline',t.v.Deadline||'');
+    if(!t.ms){
+      let mins;
+      if(t.kids.length||t.sum){
+        const ms=useCal()?workDiff(calOf(t),t.ns,t.nf):+t.nf-+t.ns;
+        mins=Math.max(0,Math.round(ms/60000));
+      }else{
+        const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
+        if(m)mins=Math.max(0,Math.round((+m[1]*60+ +m[2])*k));
+      }
+      if(mins!==undefined)set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`);
+    }
   });
-  dl(fname+'-avec-marge.xml',new XMLSerializer().serializeToString(doc),'application/xml');
+  dl(fname+'-avec-marge.xml',new XMLSerializer().serializeToString(out),'application/xml');
 };
 function setVis(all){vis=new Set(all?cols.map(c=>c.k):PRIO.filter(k=>cols.some(c=>c.k===k)));
   $('pan').querySelectorAll('input').forEach(i=>i.checked=vis.has(i.dataset.c));buildHead();render()}
@@ -996,13 +1167,19 @@ async function load(f){
     const buf=await f.arrayBuffer(),h=new Uint8Array(buf.slice(0,4));
     if(h[0]===0xD0&&h[1]===0xCF&&h[2]===0x11&&h[3]===0xE0)
       throw Error("Le format .mpp est binaire et propriétaire : cette page ne peut pas le lire. Dans MS Project : Fichier › Enregistrer sous › « Fichier XML », puis ouvrez ce fichier ici.");
-    parse(new TextDecoder('utf-8').decode(buf));buildHead();render();$('ttl').textContent=fname+' — Planning avec marge';showTab('t');
+    let txt;
+    if(h[0]===0xFF&&h[1]===0xFE)txt=new TextDecoder('utf-16le').decode(buf);
+    else if(h[0]===0xFE&&h[1]===0xFF)txt=new TextDecoder('utf-16be').decode(buf);
+    else txt=new TextDecoder('utf-8').decode(buf);
+    const ext=(f.name.split('.').pop()||'').toLowerCase();
+    if(ext==='mpp')throw Error("Le format .mpp est binaire et propriétaire : cette page ne peut pas le lire. Dans MS Project : Fichier › Enregistrer sous › « Fichier XML », puis ouvrez ce fichier ici.");
+    parse(txt);buildHead();render();$('ttl').textContent=fname+' — Planning avec marge';showTab('t');
   }catch(e){err(e.message)}
 }
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
-['k','mode','zoom','showO','showL','showC','showT','showP','sd','useC','pm'].forEach(i=>$(i).oninput=render);
 $('calOn').oninput=()=>{applyCals();render()};
 $('calSel').oninput=()=>{applyCals();render()};
+['k','mode','zoom','showO','showB','showL','showC','showT','showP','sd','useC','pm'].forEach(i=>$(i).oninput=render);
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>

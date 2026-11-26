@@ -14,10 +14,10 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 
 | Onglet | Contenu |
 |---|---|
-| **Fichier** | Ouvrir un fichier XML (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML, PDF, ou **PPTX (sélection)** |
+| **Fichier** | Ouvrir un fichier XML/MSPDI (bouton ou glisser-déposer), exporter la vue courante en XML Project, CSV (Excel), HTML, PDF, ou **PPTX (sélection)** |
 | **Tâche** | Boutons de niveaux hiérarchiques, **édition du planning** (ajouter/supprimer/monter/descendre/indenter/désindenter, Annuler/Rétablir), choix des colonnes visibles, effacement des filtres/tris |
-| **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), **calendrier** (jours ouvrés, choix du calendrier du projet) et **contraintes** (case « Appliquer les contraintes dans le calcul ») |
-| **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
+| **Projet** | Coefficient de marge (ex. 1.3), méthode de calcul : « Respecter les liens » (propagation via les prédécesseurs) ou « Homothétie du calendrier » (mise à l'échelle globale), **calendrier** (jours ouvrés, choix du calendrier du projet), **baselines MS Project 0–10** (définir/effacer l'emplacement choisi) et **contraintes** (case « Appliquer les contraintes dans le calcul ») |
+| **Affichage** | Zoom (tout le projet ↔ 1 jour), affichage du planning initial, de la **baseline**, des liens entre tâches, de la ligne « aujourd'hui », et **ligne de progression** à une date de statut réglable |
 | **Format** | Chemin critique en rouge, chemin de la tâche sélectionnée (prédécesseurs/successeurs pilotants ou tous), texte affiché à droite des barres (nom, ID, durée, dates, % achevé, ressources, décalage de fin) |
 
 ## Séparateur tableau / Gantt
@@ -49,6 +49,7 @@ Le planning initial s'affiche en **gris**, le planning recalculé avec marge en 
 ## Suivi d'avancement
 
 - **Barres de progression** dans le Gantt (et les exports HTML/PDF) : remplissage sombre à hauteur du % achevé, sur la barre avec marge (bleue) et sur la barre initiale (grise).
+- **Baselines MS Project** : les emplacements 0 à 10 sont importés/exportés avec les champs MSPDI correspondants (`BaselineStart`/`Baseline1Start`…`Baseline10Start`, idem pour fin et durée). Choisir un emplacement puis « Définir référence » enregistre les dates et durées courantes pour toutes les tâches ; « Effacer » ne supprime que l'emplacement choisi. La baseline sélectionnée est affichée en pointillés orange dans le Gantt et les colonnes « Écart début (j) » et « Écart fin (j) » comparent le planning courant à celle-ci, en jours ouvrés si le calendrier est actif. Les dates et durées de référence sont disponibles dans le sélecteur de colonnes ; capture et effacement sont annulables.
 - **Ligne de progression** (onglet Affichage, date de statut réglable, aujourd'hui par défaut) : ligne verticale verte en pointillés à la date de statut, avec un **losange sur chaque tâche en cours** à cette date — rouge si l'avancement est inférieur à ce que le calendrier prévoit (retard), vert sinon. Le % attendu est calculé en temps ouvré quand le calendrier est actif.
 - **Tâches en retard** : barre latérale rouge sur la ligne des tâches non terminées dont la fin prévue est dépassée à la date de statut ; compteur « En retard » dans la barre de statut.
 - **% achevé des récapitulatives** : cumulé au prorata des durées des tâches filles (comme MS Project).
@@ -74,6 +75,8 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - Toutes ces modifications sont undoables (Ctrl+Z), recalculent le planning avec marge et sont persistées dans l'export XML.
 - **Annuler / Rétablir** (boutons ↶ ↷ ou `Ctrl+Z` / `Ctrl+Y` / `Ctrl+Maj+Z`) : historique de 100 états.
 - Les tâches récapitulatives ne sont pas éditables en durée/dates (elles englobent leurs filles), mais leur nom et leurs prédécesseurs le sont.
+- Les opérations d'ajout, déplacement, indentation, désindentation, collage et suppression renumérotent automatiquement WBS et `OutlineNumber`.
+- Les liens prédécesseurs/successeurs sont refusés lorsqu'ils créent une boucle circulaire dans le planning.
 
 ## Contraintes et échéances
 
@@ -90,7 +93,12 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - Si la case est décochée, on retombe sur l'ancien comportement : tout le temps est calendaire (les week-ends comptent).
 - Dans le Gantt (et les exports HTML/PDF), les **jours non travaillés sont grisés** quand le zoom est suffisant.
 - La durée d'un « jour » affichée (colonne Durée) est déduite du calendrier (8 h par défaut pour le calendrier Standard).
-- Limites : les exceptions récurrentes sans plage de dates (`TimePeriod`) ne sont pas gérées ; les calendriers de ressources ne modifient pas la planification des tâches.
+- Les exceptions récurrentes quotidiennes, hebdomadaires, mensuelles et annuelles sont prises en charge selon les champs MSPDI (`Type`, `Period`, `Occurrences`, `DaysOfWeek`, `Month`, `MonthDay`, `MonthPosition`) ; les calendriers de ressources ne modifient pas la planification des tâches.
+
+## Tests automatisés
+
+- Exécuter la suite : `npm test`
+- Les tests couvrent les semaines normales, les exceptions fixes, les exceptions récurrentes quotidiennes/hebdomadaires/mensuelles/annuelles et le parsing des durées MS Project.
 
 ## Chemin critique et chemins pilotants
 
@@ -101,7 +109,7 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 
 | Format | Description |
 |---|---|
-| **XML Project** | Le fichier XML d'origine avec Start/Finish/Duration modifiés selon la marge — réimportable dans MS Project |
+| **XML Project / MSPDI** | Le fichier XML d'origine avec Start/Finish/Duration modifiés selon la marge — réimportable dans MS Project |
 | **CSV** | La vue tableau courante (séparateur `;`, compatible Excel) |
 | **HTML** | Une image SVG fidèle de la vue courante (tableau + Gantt), autonome |
 | **PDF** | Impression de cette même vue via le navigateur |
