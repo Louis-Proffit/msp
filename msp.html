@@ -34,6 +34,16 @@ th .fb{float:right;margin-top:14px;padding:0 4px;font-size:11px;line-height:18px
 th .fb.on{background:var(--ac);color:var(--bg);border-color:var(--ac)}
 th em{font-style:normal;color:var(--ac);margin-left:4px}
 td{height:26px;padding:0 6px;border-right:1px solid var(--ln);border-bottom:1px solid var(--ln);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.kind{padding:2px 4px;overflow:visible}
+td.kind .task-kind{display:inline-flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--ln);border-radius:7px;background:var(--hd)}
+.task-kind button{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:3px 6px;border:1px solid transparent;border-radius:5px;background:transparent;color:var(--mu);font-size:11px;line-height:1.2;white-space:nowrap}
+.task-kind button svg{width:13px;height:13px;flex:none}
+.task-kind button.active{background:var(--pn);border-color:var(--ln);color:var(--ac);box-shadow:0 1px 2px #0001}
+.task-kind button[data-task-value="1"].active{color:var(--ms)}
+.task-kind button:hover:not(:disabled){background:color-mix(in srgb,var(--ac) 10%,var(--pn));color:var(--tx)}
+.task-kind button:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.task-kind button:disabled{opacity:.55;cursor:not-allowed}
+.task-kind[aria-disabled=true]{opacity:.72}
 tr:hover>td,.gr:hover{background-color:color-mix(in srgb,var(--ac) 9%,var(--pn))}
 tr.sm td{font-weight:600;background-color:color-mix(in srgb,var(--ac) 5%,var(--pn))}
 td.nu{text-align:right}td.mg{color:var(--nw)}
@@ -58,6 +68,9 @@ td[data-e]{cursor:text;box-shadow:inset 0 -1px 0 var(--ln)}td[data-e]:hover{box-
 .m{transform:rotate(45deg)}.m.o{background:var(--or);top:2px;width:8px;height:8px;border-radius:0}.m.n{background:var(--ms);top:12px;width:11px;height:11px;border-radius:0}
 .bl{position:absolute;height:4px;top:0;background:repeating-linear-gradient(90deg,var(--ms) 0 4px,transparent 4px 7px)}
 .m.bl{top:1px;width:7px;height:7px;background:var(--ms)}
+.a{position:absolute;display:block;height:3px;top:7px;background:var(--ac);border-radius:2px}
+.am{position:absolute;top:3px;height:12px;border-left:2px solid var(--ac);pointer-events:none}
+.m.a{top:5px;width:7px;height:7px;background:var(--ac)}
 .n.cr,.sm.gr .n.cr{background:var(--cr)}.n.pa,.sm.gr .n.pa{background:var(--pa)}.m.n.cr{background:var(--cr)}.m.n.pa{background:var(--pa)}
 .pg{background:var(--tx);opacity:.45;height:11px;top:11px;border-radius:3px}.sm.gr .pg{height:8px;top:12px;border-radius:0}
 .pgo{background:var(--tx);opacity:.3;height:6px;top:3px;border-radius:3px}
@@ -97,7 +110,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 
 <div class="bar" id="tab-f" hidden>
 <section class="g"><div class="row"><button class="big" onclick="file.click()"><i>📂</i>Ouvrir</button></div><h5>Fichier</h5></section>
-<section class="g"><div class="row"><button class="big" id="bx" disabled><i>🗂️</i>XML Project</button><button class="big" id="bc" disabled><i>📊</i>CSV (Excel)</button><button class="big" id="bh" disabled><i>🌐</i>HTML</button><button class="big" id="bp" disabled><i>📄</i>PDF</button><button class="big" id="bpptx" disabled><i>PPT</i>PPTX (sélection)</button></div><h5>Exporter (vue courante / sélection)</h5></section>
+<section class="g"><div class="row"><button class="big" id="bx" disabled><i>🗂️</i>XML Project</button><button class="big" id="bc" disabled><i>📊</i>CSV (Excel)</button><button class="big" id="bh" disabled><i>🌐</i>HTML</button><button class="big" id="bp" disabled><i>📄</i>PDF</button><button class="big" id="bpptx" disabled><i>PPT</i>PPTX (sélection)</button><button class="big" id="br" disabled><i>📈</i>Rapport projet</button></div><h5>Exporter (vue courante / sélection)</h5></section>
 </div>
 
 <div class="bar" id="tab-t">
@@ -117,7 +130,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 
 <div class="bar" id="tab-v" hidden>
 <section class="g"><div class="row"><button class="big" id="zfit"><i>⤢</i>Tout le projet</button><button class="big" id="zday"><i>🔍</i>1 jour</button></div><h5>Zoom</h5></section>
-<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showB" checked> Référence (baseline)</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label><label><input type="checkbox" id="showP" checked> Ligne de progression <input type="date" id="sd"></label></div><h5>Éléments</h5></section>
+<section class="g"><div class="row col"><label><input type="checkbox" id="showO" checked> Planning initial</label><label><input type="checkbox" id="showB" checked> Référence (baseline)</label><label><input type="checkbox" id="showA" checked> Dates réelles</label><label><input type="checkbox" id="showL" checked> Liens entre tâches</label><label><input type="checkbox" id="showT" checked> Ligne « aujourd'hui »</label><label><input type="checkbox" id="showP" checked> Ligne de progression <input type="date" id="sd"></label></div><h5>Éléments</h5></section>
 </div>
 
 <div class="bar" id="tab-m" hidden>
@@ -137,11 +150,15 @@ const iso=d=>`${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}T${p2(d
 const fd=d=>d.toLocaleDateString('fr-FR');
 const kids=(e,t)=>[...e.children].filter(c=>c.localName===t);
 const g=(e,t)=>{const n=kids(e,t)[0];return n?n.textContent:null};
-const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',BaselineStart:'Début de référence',BaselineFinish:'Fin de référence',BaselineDuration:'Durée de référence',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût',FixedCost:'Coût fixe',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',CalendarUID:'Calendrier',Notes:'Notes',Summary:'Récapitulative',Milestone:'Type de tâche',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)',_sv:'Écart début (j)',_fv:'Écart fin (j)',_al:'Alerte contrainte',_succ:'Successeurs'};
+const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineNumber:'Numéro hiérarchique',Duration:'Durée',Start:'Début',Finish:'Fin',BaselineStart:'Début de référence',BaselineFinish:'Fin de référence',BaselineDuration:'Durée de référence',PercentComplete:'% achevé',PercentWorkComplete:'% travail achevé',Work:'Travail',Cost:'Coût (MSP)',FixedCost:'Coût fixe',ActualCost:'Coût réel (MSP)',RemainingCost:'Coût restant (MSP)',BaselineCost:'Coût de référence (MSP)',Priority:'Priorité',ConstraintType:'Type de contrainte',ConstraintDate:'Date de contrainte',Deadline:'Date limite',CalendarUID:'Calendrier',Notes:'Notes',Summary:'Récapitulative',Milestone:'Type de tâche',Critical:'Critique',TotalSlack:'Marge totale',FreeSlack:'Marge libre',ActualStart:'Début réel',ActualFinish:'Fin réelle',ActualDuration:'Durée réelle',RemainingDuration:'Durée restante',ActualWork:'Travail réel',RemainingWork:'Travail restant',Active:'Actif',Manual:'Manuel',Type:'Type',CreateDate:'Date de création',EarlyStart:'Début au plus tôt',EarlyFinish:'Fin au plus tôt',LateStart:'Début au plus tard',LateFinish:'Fin au plus tard',_pred:'Prédécesseurs',_res:'Noms des ressources',_ns:'Début (avec marge)',_nf:'Fin (avec marge)',_nd:'Durée (avec marge)',_dl:'Décalage fin (j)',_sv:'Écart début (j)',_fv:'Écart fin (j)',_al:'Alerte contrainte',_succ:'Successeurs',_budgetCost:'Budget / estimé',_actualCost:'Coût réel',_remainingCost:'Coût restant',_baselineCost:'Budget de référence',_costVariance:'Écart au budget'};
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
-const PRIO=['ID','Name','Milestone','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl','_sv','_fv'];
+const COST_COLUMN_METRICS={_budgetCost:'budget',_actualCost:'actual',_remainingCost:'remaining',_baselineCost:'baseline',_costVariance:'variance'};
+const COST_FIELD_NAMES=['Cost','FixedCost','ActualCost','RemainingCost','BaselineCost'];
+const PRIO=['ID','Name','Milestone','Duration','Start','Finish','PercentComplete','_budgetCost','_actualCost','_pred','_res','_ns','_nf','_nd','_dl','_sv','_fv'];
 let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null,multi=new Set(),qsearch='',clip=null;
+let resourceByUid=new Map(),assignmentsByTask=new Map(),defaultRate=null,minutesPerDay=480,minutesPerWeek=2400,daysPerMonth=20;
+let currencyCode='EUR',currencySymbol='€',currencyKnown=false,currencyDigits=2,costCache=null;
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
 /* ---- Calendriers : calcul en temps ouvré ---- */
@@ -242,7 +259,7 @@ function durationHours(raw){
   if(raw===undefined||raw===null||raw==='')return null;
   const s=String(raw).trim();
   if(/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(s))return Number(s)/36e5;
-  const m=/^(-)?P(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/.exec(s);
+  const m=/^(-)?P(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/i.exec(s);
   if(!m||!m.slice(2).some(v=>v!==undefined))return null;
   return(m[1]?-1:1)*((+m[2]||0)*168+(+m[3]||0)*24+(+m[4]||0)+(+m[5]||0)/60+(+m[6]||0)/3600);
 }
@@ -267,6 +284,7 @@ function detect(k){
   const vs=tasks.map(t=>t.v[k]).filter(x=>x!==undefined&&x!=='');
   if(/^Baseline\d*(Start|Finish)$/.test(k))return'date';
   if(/Duration$/.test(k))return'dur';
+  if(/Cost$/.test(k))return'currency';
   if(k==='_sv'||k==='_fv')return'num';
   if(BOOL.has(k))return'bool';if(k==='_nd')return'dur';if(!vs.length)return'txt';
   if(vs.every(v=>/^\d{4}-\d\d-\d\dT/.test(v)))return'date';
@@ -279,8 +297,34 @@ function parse(txt){
   const root=x.getElementsByTagNameNS('*','Tasks')[0];
   if(!root)throw Error("Aucune tâche trouvée : ce n'est pas un export XML de MS Project.");
   const all=n=>[...x.getElementsByTagNameNS('*',n)];
-  const rn={};all('Resource').forEach(r=>rn[g(r,'UID')]=g(r,'Name'));
-  const asg={};all('Assignment').forEach(a=>{const r=rn[g(a,'ResourceUID')];if(r)(asg[g(a,'TaskUID')]??=[]).push(r)});
+  const project=x.documentElement,code=g(project,'CurrencyCode');
+  currencyKnown=!!(code&&/^[A-Za-z]{3}$/.test(code.trim()));
+  currencyCode=currencyKnown?code.trim().toUpperCase():'EUR';
+  currencySymbol=g(project,'CurrencySymbol')||'€';
+  currencyDigits=Math.max(0,Math.min(4,Math.trunc(numericValue(g(project,'CurrencyDigits'))??2)));
+  minutesPerDay=numericValue(g(project,'MinutesPerDay'))||480;
+  minutesPerWeek=numericValue(g(project,'MinutesPerWeek'))||minutesPerDay*5;
+  daysPerMonth=numericValue(g(project,'DaysPerMonth'))||20;
+  dayH=minutesPerDay/60;
+  defaultRate=numericValue(g(project,'DefaultStandardRate'));
+  const statusDate=g(project,'StatusDate');
+  if(statusDate){const parsedStatus=new Date(statusDate);if(Number.isFinite(+parsedStatus))$('sd').value=iso(parsedStatus).slice(0,10)}
+  resourceByUid=new Map(all('Resource').map(r=>[g(r,'UID'),{
+    uid:g(r,'UID'),name:g(r,'Name')||'Ressource sans nom',
+    standardRate:numericValue(g(r,'StandardRate')),rateFormat:numericValue(g(r,'StandardRateFormat'))??2,
+    overtimeRate:numericValue(g(r,'OvertimeRate')),costPerUse:numericValue(g(r,'CostPerUse'))||0
+  }]));
+  assignmentsByTask=new Map();const asg={};
+  all('Assignment').forEach(a=>{
+    const taskUid=g(a,'TaskUID'),resourceUid=g(a,'ResourceUID'),resource=resourceByUid.get(resourceUid);
+    if(!taskUid)return;
+    const assignment={resourceUid,units:numericValue(g(a,'Units'))??1};
+    ['Work','ActualWork','RemainingWork','BaselineWork','Cost','ActualCost','RemainingCost','BaselineCost'].forEach(k=>assignment[k]=g(a,k));
+    if(!assignmentsByTask.has(taskUid))assignmentsByTask.set(taskUid,[]);
+    assignmentsByTask.get(taskUid).push(assignment);
+    if(resource)(asg[taskUid]??=[]).push(resource.name);
+  });
+  costCache=null;
   const ea={};all('ExtendedAttribute').filter(e=>e.parentNode.localName==='ExtendedAttributes').forEach(e=>ea[g(e,'FieldID')]=g(e,'Alias')||g(e,'FieldName'));
   cals={};all('Calendar').forEach(c=>{const uid=g(c,'UID'),week=new Map(),exc=[];
     const wds=kids(c,'WeekDays')[0];
@@ -316,6 +360,7 @@ function parse(txt){
     const uid=g(e,'UID'),v={};
     if(uid==='0'||!g(e,'Start'))return;
     [...e.children].forEach(c=>{if(!c.children.length)v[c.localName]=c.textContent});
+    if(v.Milestone===undefined)v.Milestone='0';
     kids(e,'ExtendedAttribute').forEach(a=>{const id=g(a,'FieldID');v['EA'+id]=g(a,'Value');LAB['EA'+id]=ea[id]||'Champ '+id});
     v._res=(asg[uid]||[]).join(', ');
     const t={uid,el:e,v,lvl:+v.OutlineLevel||1,sum:v.Summary==='1',ms:v.Milestone==='1',s:new Date(v.Start),f:new Date(v.Finish),kids:[],parent:null,
@@ -333,7 +378,9 @@ function parse(txt){
   const maxL=Math.max(...tasks.filter(t=>t.kids.length).map(t=>t.lvl),0)+1;
   $('lv').innerHTML='Niveaux : '+Array.from({length:maxL},(_,i)=>`<button data-l="${i+1}">${i+1}</button>`).join('')+'<button data-l="0">Tout</button>';
   applyCals();
-  ['BaselineStart','BaselineFinish','BaselineDuration','_ns','_nf','_nd','_dl','_sv','_fv','_al'].forEach(k=>keys.includes(k)||keys.push(k));
+  ['BaselineStart','BaselineFinish','BaselineDuration','_ns','_nf','_nd','_dl','_sv','_fv','_al',...COST_FIELD_NAMES].forEach(k=>keys.includes(k)||keys.push(k));
+  for(let i=1;i<=10;i++)if(!keys.includes(`Baseline${i}Cost`))keys.push(`Baseline${i}Cost`);
+  Object.keys(COST_COLUMN_METRICS).forEach(k=>keys.includes(k)||keys.push(k));
   keys.filter(k=>/^Baseline\d+(Start|Finish|Duration)$/.test(k)).forEach(k=>{
     const m=/^Baseline(\d+)(Start|Finish|Duration)$/.exec(k);
     LAB[k]=`${m[2]==='Start'?'Début':m[2]==='Finish'?'Fin':'Durée'} baseline ${m[1]}`;
@@ -344,8 +391,8 @@ function parse(txt){
   refreshLinks();
   const order=[...PRIO.filter(k=>keys.includes(k)||k==='_res'),...keys.filter(k=>!PRIO.includes(k))];
   tasks.forEach(t=>{t.v._ns=t.v._nf=t.v._nd=t.v._dl=''});
-  cols=order.map(k=>{const type=k==='_ns'||k==='_nf'?'date':k==='_dl'?'num':detect(k);return{k,type,label:LAB[k]||k,unit:/Work/.test(k)?'h':'j',
-    w:k==='Name'?280:k==='Notes'?200:type==='date'?105:/^_(pred|res)$/.test(k)?140:105}});
+  cols=order.map(k=>{const type=COST_COLUMN_METRICS[k]?'currency':k==='_ns'||k==='_nf'?'date':k==='_dl'?'num':detect(k);return{k,type,label:LAB[k]||k,unit:/Work/.test(k)?'h':'j',
+    w:k==='Name'?280:k==='Notes'?200:k==='Milestone'?150:type==='date'?105:/^_(pred|res)$/.test(k)?140:105}});
   vis=new Set(PRIO.filter(k=>order.includes(k)));sort=null;filt={};
   $('pan').innerHTML='<div class="b"><button onclick="setVis(1)">Toutes</button><button onclick="setVis(0)">Par défaut</button></div>'+
     cols.map(c=>`<label><input type="checkbox" data-c="${c.k}"${vis.has(c.k)?' checked':''}> ${esc(c.label)}</label>`).join('');
@@ -393,9 +440,100 @@ function detailText(t){
 function labelHTML(t,x){
   const tx=detailText(t);if(!tx)return'';
   const bf=baselineVisible()?(baselineOf(t)?.f||0):0;
-  return`<span class="lb" style="left:${x(Math.max(+t.nf,$('showO').checked?+t.f:0,bf))+(t.ms?10:6)}px">${esc(tx)}</span>`;
+  const af=$('showA').checked?(actualOf(t).f||0):0;
+  return`<span class="lb" style="left:${x(Math.max(+t.nf,$('showO').checked?+t.f:0,bf,+af))+(t.ms?10:6)}px">${esc(tx)}</span>`;
 }
-function baselineFields(slot=+$('baseSlot').value){const p=slot?`Baseline${slot}`:'Baseline';return{start:p+'Start',finish:p+'Finish',duration:p+'Duration'}}
+function baselineFields(slot=+$('baseSlot').value){const p=slot?`Baseline${slot}`:'Baseline';return{start:p+'Start',finish:p+'Finish',duration:p+'Duration',cost:p+'Cost'}}
+function numericValue(raw){
+  if(raw===undefined||raw===null||String(raw).trim()==='')return null;
+  const n=Number(String(raw).trim().replace(',','.'));
+  return Number.isFinite(n)?n:null;
+}
+function formatMoney(value){
+  const options={minimumFractionDigits:currencyDigits,maximumFractionDigits:currencyDigits};
+  if(currencyKnown)return new Intl.NumberFormat('fr-FR',{...options,style:'currency',currency:currencyCode}).format(value);
+  return`${new Intl.NumberFormat('fr-FR',options).format(value)} ${currencySymbol}`;
+}
+function resourceRatePerHour(resource){
+  const rate=resource?.standardRate??defaultRate;if(rate===null)return null;
+  const minutes={1:1,2:60,3:minutesPerDay,4:minutesPerWeek,5:daysPerMonth*minutesPerDay,6:daysPerMonth*12*minutesPerDay}[resource?.rateFormat??2];
+  return minutes?rate*60/minutes:null;
+}
+function assignmentCost(t,a,metric){
+  const fields={budget:['Cost','Work'],actual:['ActualCost','ActualWork'],remaining:['RemainingCost','RemainingWork'],baseline:['BaselineCost','BaselineWork']}[metric];
+  const direct=numericValue(a[fields[0]]);if(direct!==null)return{value:direct,estimated:false,partial:false};
+  let work=durationHours(a[fields[1]]);
+  if(work===null&&metric==='budget'){
+    const taskWork=durationHours(t.v.Work),duration=t.ms?0:durationHours(t.v.Duration);
+    if(taskWork!==null){
+      const peers=assignmentsByTask.get(t.uid)||[],units=peers.reduce((sum,item)=>sum+(item.units||0),0);
+      work=units>0?taskWork*(a.units/units):0;
+    }else if(duration!==null)work=duration*(a.units??1);
+  }
+  if(work===null)return{value:null,estimated:false,partial:true};
+  const rate=resourceRatePerHour(resourceByUid.get(a.resourceUid));
+  if(rate===null)return{value:null,estimated:false,partial:true};
+  return{value:work*rate+(metric==='budget'?(resourceByUid.get(a.resourceUid)?.costPerUse||0):0),estimated:true,partial:false};
+}
+function sumCostMetrics(items){
+  const known=items.filter(m=>m&&m.value!==null);
+  return{value:known.length?known.reduce((sum,m)=>sum+m.value,0):null,
+    estimated:known.some(m=>m.estimated),partial:known.length<items.length||known.some(m=>m.partial)};
+}
+function taskCostMetric(t,key){
+  if(!costCache)costCache=new Map();
+  const id=`${t.uid}:${key}`;if(costCache.has(id))return costCache.get(id);
+  const directKeys={budget:'Cost',actual:'ActualCost',remaining:'RemainingCost',baseline:'BaselineCost'};
+  const direct=numericValue(t.v[directKeys[key]]);
+  if(direct!==null){const result={value:direct,estimated:false,partial:false};costCache.set(id,result);return result}
+  const assignments=assignmentsByTask.get(t.uid)||[];
+  let result;
+  if(t.kids.length){
+    const children=sumCostMetrics(t.kids.map(child=>taskCostMetric(child,key)));
+    if(key==='budget'){
+      const fixed=numericValue(t.v.FixedCost);
+      if(fixed!==null)children.value=(children.value??0)+fixed;
+      if(children.value!==null)result=children;
+    }
+    if(!result&&children.value!==null)result=children;
+  }else if(key==='budget'){
+    const fixed=numericValue(t.v.FixedCost),parts=assignments.map(a=>assignmentCost(t,a,key));
+    const known=parts.filter(m=>m.value!==null);
+    if(fixed!==null||known.length)result={
+      value:(fixed||0)+known.reduce((sum,m)=>sum+m.value,0),
+      estimated:known.some(m=>m.estimated),partial:known.length<parts.length||parts.some(m=>m.partial)
+    };
+  }else if(assignments.length){
+    const parts=assignments.map(a=>assignmentCost(t,a,key)),known=parts.filter(m=>m.value!==null);
+    if(known.length)result={...sumCostMetrics(parts),partial:known.length<parts.length||parts.some(m=>m.partial)};
+  }
+  if(!result&&key==='remaining'){
+    const budget=taskCostMetric(t,'budget'),actual=taskCostMetric(t,'actual');
+    if(budget.value!==null&&actual.value!==null)result={value:Math.max(0,budget.value-actual.value),
+      estimated:budget.estimated||actual.estimated,partial:budget.partial||actual.partial};
+  }
+  result??={value:null,estimated:false,partial:false};
+  costCache.set(id,result);return result;
+}
+function taskCostMetrics(t){
+  const budget=taskCostMetric(t,'budget'),actual=taskCostMetric(t,'actual'),
+    remaining=taskCostMetric(t,'remaining'),baseline=taskCostMetric(t,'baseline');
+  return{budget,actual,remaining,baseline,variance:{value:budget.value!==null&&baseline.value!==null?budget.value-baseline.value:null,
+    estimated:budget.estimated||baseline.estimated,partial:budget.partial||baseline.partial}};
+}
+function costMetricText(metric){
+  return!metric||metric.value===null?'—':`${metric.estimated?'~ ':''}${formatMoney(metric.value)}${metric.partial?'*':''}`;
+}
+function formatColumn(t,c){
+  const metric=COST_COLUMN_METRICS[c.k];
+  return metric?costMetricText(taskCostMetrics(t)[metric]):fmt(c,t.v[c.k]??'');
+}
+function actualOf(t){
+  const date=k=>{if(!t.v[k])return null;const d=new Date(t.v[k]);return Number.isFinite(+d)?d:null};
+  const s=date('ActualStart');let f=date('ActualFinish'),provisional=false;
+  if(!f&&s&&t.pct<100){const status=sdDate();if(+status>=+s){f=status;provisional=true}}
+  return{s,f,provisional};
+}
 function baselineOf(t,slot=+$('baseSlot').value){
   const keys=baselineFields(slot),raw=t.v[keys.start];
   if(!raw)return null;
@@ -409,6 +547,7 @@ function chartRange(){
   tasks.forEach(t=>{
     ds.push(+t.s,+t.f,+t.ns,+t.nf);
     if(baselineVisible()){const b=baselineOf(t);if(b)ds.push(+b.s,+b.f)}
+    if($('showA').checked){const a=actualOf(t);if(a.s)ds.push(+a.s);if(a.f)ds.push(+a.f)}
   });
   return[Math.min(...ds),Math.max(...ds)];
 }
@@ -463,8 +602,8 @@ function compute(k,mode){
     const b=baselineOf(t);
     t.v._sv=b?String(signedDays(t,b.s,t.s)):'';
     t.v._fv=b?String(signedDays(t,b.f,t.f)):'';
-    const m=/^PT(\d+)H(\d+)M/.exec(t.v.Duration||'');
-    t.v._nd=m&&!t.kids.length?String((+m[1]+m[2]/60)*k):'';
+    const h=durationHours(t.v.Duration);
+    t.v._nd=h!==null&&!t.kids.length?String(h*k):'';
   });
   const pctOf=t=>{if(!t.kids.length)return Math.max(0,Math.min(100,parseFloat(t.v.PercentComplete||'0')||0));
     let a=0,b=0;t.kids.forEach(c=>{const d=uc?durMs(c):(+c.f-+c.s);a+=pctOf(c)*d;b+=d});return b?a/b:0};
@@ -474,7 +613,7 @@ function compute(k,mode){
 
 /* ---- Édition du planning (ajout/suppression/déplacement/liens) + undo/redo ---- */
 const NS='http://schemas.microsoft.com/project';
-const NOEDIT=new Set(['UID','Summary','OutlineLevel','BaselineStart','BaselineFinish','BaselineDuration','_res','_ns','_nf','_nd','_dl','_sv','_fv','_al']);
+const NOEDIT=new Set(['UID','Summary','OutlineLevel','BaselineStart','BaselineFinish','BaselineDuration','_res','_ns','_nf','_nd','_dl','_sv','_fv','_al','_budgetCost','_actualCost','_remainingCost','_baselineCost','_costVariance']);
 const isEdit=k=>!NOEDIT.has(k);
 function rebuildTree(){tasks.forEach(t=>t.kids=[]);roots=[];const st=[];
   tasks.forEach(t=>{while(st.length&&st.at(-1).lvl>=t.lvl)st.pop();t.parent=st.at(-1)||null;(t.parent?t.parent.kids:roots).push(t);st.push(t)})}
@@ -501,6 +640,7 @@ function syncTaskEl(t){
   const core=['UID','ID','Name','OutlineLevel','Summary','Milestone','Start','Finish','Duration','PercentComplete','CalendarUID','Notes','Priority','WBS','OutlineNumber','ConstraintType','ConstraintDate','Deadline'];
   core.forEach(k=>{if(t.v[k]!==undefined)setEl(t,k,t.v[k])});
   Object.keys(t.v).forEach(k=>{if(k[0]!=='_'&&!core.includes(k))setEl(t,k,t.v[k])});
+  COST_FIELD_NAMES.forEach(k=>{if(t.v[k]===undefined)kids(t.el,k).forEach(e=>e.remove())});
   for(let i=0;i<=10;i++){const f=baselineFields(i);Object.values(f).forEach(k=>{if(t.v[k]===undefined)kids(t.el,k).forEach(e=>e.remove())})}
   setEl(t,'UID',t.uid);setEl(t,'OutlineLevel',String(t.lvl));setEl(t,'Summary',t.kids.length?'1':'0');
   setEl(t,'Start',iso(t.s));setEl(t,'Finish',iso(t.f));
@@ -563,7 +703,7 @@ function dupTasks(){copyTasks();pasteTasks()}
 function parseDurInput(s){s=s.trim().toLowerCase();let m;
   if(m=/^(\d+(?:[.,]\d+)?)\s*j/.exec(s))return +m[1].replace(',','.')*dayH;
   if(m=/^(\d+(?:[.,]\d+)?)\s*h/.exec(s))return +m[1].replace(',','.');
-  if(m=/^pt(\d+)h(\d+)m/.exec(s))return +m[1]+ +m[2]/60;
+  if(/^p/.test(s)){const h=durationHours(s);return h===null?null:h}
   if(m=/^(\d+(?:[.,]\d+)?)$/.exec(s))return +m[1].replace(',','.');
   return null}
 const durPT=h=>{const mins=Math.round(h*60);return `PT${Math.floor(mins/60)}H${mins%60}M0S`};
@@ -577,7 +717,7 @@ function parsePreds(s,t){if(!s.trim())return[];const out=[];
     const l=parseFloat(String(m[3]||'0').replace(',','.'));
     out.push({uid:q.uid,type:ty,lag:l*(useCal()?dayMsCal(calOf(t)):dayH*36e5)})}
   return out}
-function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return false;
+function applyEdit(t,k,raw){raw=String(raw).trim();const optionalCost=COST_FIELD_NAMES.includes(k)||/^Baseline\d+Cost$/.test(k);if(!raw&&k!=='_pred'&&!optionalCost)return false;
   if((k==='Duration'||k==='Start'||k==='Finish'||k==='PercentComplete')&&t.kids.length){err('Tâche récapitulative : modifiez ses tâches filles.');return false}
   if(k==='Name'&&(!raw||raw.length>255)){err('Nom invalide (1 à 255 caractères).');return false}
   const oldPreds=t.preds.map(p=>({...p}));
@@ -585,11 +725,11 @@ function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return f
   const uc=useCal(),c=cols.find(c=>c.k===k);
   if(k==='Name')t.v.Name=raw;
   else if(k==='Duration'){const h=parseDurInput(raw);if(h===null||h<0){err('Durée invalide (ex : 3j, 24h, PT8H0M)');return}
-    t.v.Duration=durPT(h);t.f=uc?addWork(calOf(t),+t.s,h*36e5):new Date(+t.s+h*36e5*dayH)}
+    t.v.Duration=durPT(h);t.f=uc?addWork(calOf(t),+t.s,h*36e5):new Date(+t.s+h*36e5)}
   else if(k==='Start'){const d=parseDateFr(raw);if(!d){err('Date invalide (jj/mm/aaaa)');return}
     t.s=d;const h=durMs(t)/36e5;t.f=uc?addWork(calOf(t),+t.s,h*36e5):new Date(+t.s+h*36e5*dayH)}
   else if(k==='Finish'){const d=parseDateFr(raw);if(!d){err('Date invalide (jj/mm/aaaa)');return}
-    t.f=d;const h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/(36e5*dayH);t.v.Duration=durPT(Math.max(0,h))}
+    t.f=d;const h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/36e5;t.v.Duration=durPT(Math.max(0,h))}
   else if(k==='PercentComplete')t.v.PercentComplete=String(Math.max(0,Math.min(100,parseInt(raw,10)||0)));
   else if(k==='_pred'){const ps=parsePreds(raw,t);if(ps===null){err('Prédécesseurs invalides (ex : 1FD, 2FF+1j)');return false}t.preds=ps;
     if(linkGraphHasCycle()){t.preds=oldPreds;err('Lien refusé : cela créerait une boucle dans le planning.');return false}}
@@ -599,11 +739,25 @@ function applyEdit(t,k,raw){raw=String(raw).trim();if(!raw&&k!=='_pred')return f
     if(linkGraphHasCycle()){predSnapshots.forEach(({q,preds})=>q.preds=preds);err('Lien refusé : cela créerait une boucle dans le planning.');return false}}
   else if(c&&c.type==='date'){const d=parseDateFr(raw);if(!d){err('Date invalide (jj/mm/aaaa)');return}t.v[k]=iso(d)}
   else if(k==='ConstraintType'&&isNaN(parseFloat(raw))){const i=CT.findIndex(x=>x.toLowerCase()===raw.toLowerCase());if(i<0){err('Type de contrainte inconnu');return}t.v[k]=String(i)}
+  else if(c&&c.type==='currency'){
+    if(!raw)delete t.v[k];
+    else{const n=Number(raw.replace(/[\s\u00a0\u202f]/g,'').replace(',','.'));if(!Number.isFinite(n)){err('Montant invalide (ex : 1250,50)');return}t.v[k]=String(n)}
+  }
   else if(c&&c.type==='num'){const n=parseFloat(raw.replace(',','.'));if(isNaN(n)){err('Nombre invalide');return}t.v[k]=String(n)}
   else if(c&&c.type==='bool')t.v[k]=/^(1|oui|true|yes|vrai)$/i.test(raw)?'1':'0';
   else if(c&&c.type==='dur'){const h=parseDurInput(raw);if(h===null){err('Durée invalide (ex : 3j, 24h)');return}t.v[k]=durPT(h)}
   else t.v[k]=raw;
-  if(k==='Milestone'){t.ms=t.v.Milestone==='1';if(t.ms)t.f=new Date(t.s)}
+  if(k==='Milestone'){
+    const makeMilestone=t.v.Milestone==='1';
+    if(makeMilestone&&!t.ms){
+      t.v._taskDuration=t.v.Duration;t.ms=true;t.v.Duration=durPT(0);t.f=new Date(t.s);
+    }else if(!makeMilestone&&t.ms){
+      t.ms=false;
+      const old=durationHours(t.v._taskDuration??t.v.Duration),h=old!==null&&old>0?old:dayH;
+      delete t.v._taskDuration;t.v.Duration=durPT(h);
+      t.f=uc?addWork(calOf(t),+t.s,h*36e5):new Date(+t.s+h*36e5);
+    }
+  }
   t.v.Start=iso(t.s);t.v.Finish=iso(t.f);t.v.OutlineLevel=String(t.lvl);
   refreshLinks();syncTaskEl(t);return true}
 function refreshLinks(){tasks.forEach(t=>{
@@ -627,7 +781,7 @@ function linkGraphHasCycle(){
   return tasks.some(t=>color.get(t.uid)!=='2'&&visit(t.uid));
 }
 function setTaskDates(t,s,f){t.s=new Date(s);t.f=new Date(t.ms?t.s:f);
-  const uc=useCal(),h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/(36e5*dayH);
+  const uc=useCal(),h=uc?workDiff(calOf(t),t.s,t.f)/36e5:(+t.f-+t.s)/36e5;
   if(!t.ms&&h>=0)t.v.Duration=durPT(h);
   t.v.Start=iso(t.s);t.v.Finish=iso(t.f);syncTaskEl(t)}
 function moveBar(uid,days){const t=byUid[uid];if(!t||t.kids.length||!days)return false;
@@ -656,6 +810,7 @@ function linkBars(a,b,type,lag){const A=byUid[a],B=byUid[b];if(!A||!B||a===b)ret
 function rawVal(t,k){if(k==='Start')return fd(t.s);if(k==='Finish')return fd(t.f);if(k==='_pred')return t.v._pred||'';if(k==='_succ')return t.v._succ||'';
   const c=cols.find(c=>c.k===k);
   if(c&&c.type==='date'&&t.v[k])return fd(new Date(t.v[k]));
+  if(c&&c.type==='currency')return t.v[k]??'';
   return c?fmt(c,t.v[k]||''):(t.v[k]||'')}
 function startEdit(td,t,k){if(td.querySelector('input'))return;selUid=t.uid;const inp=document.createElement('input');inp.value=rawVal(t,k);inp.style.cssText='width:100%;padding:2px 4px';
   td.textContent='';td.appendChild(inp);inp.focus();inp.select();let done=0;
@@ -666,18 +821,20 @@ function fmt(c,r){
   if(r===undefined||r==='')return'';
   switch(c.type){
     case'date':return fd(new Date(r));
-    case'dur':{const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);
+    case'dur':{const h=durationHours(r);if(h===null)return String(r);
       return c.unit==='j'?Math.round(h/dayH*10)/10+' j':Math.round(h*10)/10+' h'}
+    case'currency':{const n=numericValue(r);return n===null?'—':formatMoney(n)}
     case'bool':return r==='1'?'Oui':'Non';
     case'num':return c.k==='_dl'||c.k==='_sv'||c.k==='_fv'?((+r>0?'+':'')+(+r).toFixed(1)+' j'):c.k==='ConstraintType'?(CT[r]||r):c.k==='PercentComplete'?r+' %':r;
   }
   return r;
 }
 function val(t,c){
-  const r=t.v[c.k];if(r===undefined||r==='')return null;
+  const metric=COST_COLUMN_METRICS[c.k],r=metric?taskCostMetrics(t)[metric].value:t.v[c.k];if(r===undefined||r===null||r==='')return null;
   if(c.type==='date')return+new Date(r);
   if(c.type==='num')return parseFloat(r);
-  if(c.type==='dur'){const m=/^PT(\d+)H(\d+)M/.exec(r),h=m?+m[1]+m[2]/60:parseFloat(r);return c.unit==='j'?h/dayH:h}
+  if(c.type==='currency')return Number(r);
+  if(c.type==='dur'){const h=durationHours(r);return h===null?null:c.unit==='j'?h/dayH:h}
   return fmt(c,r).toLowerCase();
 }
 const cmpv=(x,y)=>x===y?0:x===null?1:y===null?-1:typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),'fr',{numeric:true});
@@ -686,7 +843,7 @@ function parseUser(c,s){
   return c.type==='date'?+new Date(m?`${m[3]}-${m[2]}-${m[1]}`:s):parseFloat(s.replace(',','.'));
 }
 function pass(t,c,f){
-  const d=fmt(c,t.v[c.k]);
+  const d=formatColumn(t,c);
   if(f.set&&!f.set.has(d))return false;
   if(f.cond){
     const{op,v}=f.cond;
@@ -723,7 +880,7 @@ function rows(){
   out.forEach(t=>{
     if(grp==='_res'){const ls=(t.v._res||'').split(',').map(s=>s.trim()).filter(Boolean);
       (ls.length?ls:['(Vides)']).forEach(l=>add(l,t))}
-    else add(fmt(c,t.v[c.k])||'(Vides)',t)});
+    else add(formatColumn(t,c)||'(Vides)',t)});
   const res=[];
   [...groups.entries()].sort((a,b)=>String(a[0]).localeCompare(String(b[0]),'fr',{numeric:true}))
     .forEach(([l,list])=>{res.push({hdr:l,n:list.length});res.push(...list)});
@@ -738,16 +895,23 @@ function buildHead(){
 }
 function render(){
   if(!doc)return;
+  costCache=null;
   const k=Math.max(0.1,+$('k').value||1);compute(k,$('mode').value);computeCrit();computePath();
   const vc=vcols(),rs=rows(),ppd=getPPD(),showO=$('showO').checked;$('zl').textContent=+$('zoom').value===0?'Tout':'1 j = '+(ppd<10?ppd.toFixed(1):Math.round(ppd))+' px';
   const sd=sdDate(),late=t=>$('showP').checked&&t.pct<100&&+sd>+t.nf;
   $('tb').innerHTML=rs.map(o=>o.hdr!==undefined
     ?`<tr class="grph"><td colspan="${vc.length}">${esc(o.hdr)} <em>(${o.n})</em></td></tr>`
     :`<tr data-u="${o.uid}" class="${o.kids.length?'sm':''}${o.uid===selUid||multi.has(o.uid)?' sel':''}${late(o)?' late':''}${o.warn?' warn':''}">`+vc.map(c=>{
-    const d=c.k==='PercentComplete'&&o.kids.length?esc(Math.round(o.pct)+' %'):esc(fmt(c,o.v[c.k]));let inner=d,pad='';
+    const d=c.k==='PercentComplete'&&o.kids.length?esc(Math.round(o.pct)+' %'):esc(formatColumn(o,c));let inner=d,pad='';
     if(c.k==='Name'){pad=` style="padding-left:${6+(o.lvl-1)*16}px"`;
       inner=`<span class="tg"${o.kids.length?` data-u="${o.uid}"`:''}>${o.kids.length?(collapsed.has(o.uid)?'▶':'▼'):''}</span>`+d}
-    return`<td class="${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl|sv|fv)$/.test(c.k)?' mg':''}" title="${d}${isEdit(c.k)?' — double-clic pour modifier':''}"${pad}${isEdit(c.k)?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
+    if(c.k==='Milestone')inner=`<div class="task-kind" role="group" aria-label="Type de tâche : ${esc(o.v.Name||'')}" aria-disabled="${o.kids.length?'true':'false'}">
+      <button type="button" data-task-type="${o.uid}" data-task-value="0" class="${o.ms?'':'active'}" aria-pressed="${o.ms?'false':'true'}" title="Tâche"${o.kids.length?' disabled':''}><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 5.5h6M5 8h6M5 10.5h4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg><span>Tâche</span></button>
+      <button type="button" data-task-type="${o.uid}" data-task-value="1" class="${o.ms?'active':''}" aria-pressed="${o.ms?'true':'false'}" title="Jalon"${o.kids.length?' disabled':''}><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5 14.5 8 8 14.5 1.5 8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.2" fill="currentColor"/></svg><span>Jalon</span></button>
+    </div>`;
+    const editable=isEdit(c.k)&&c.k!=='Milestone';
+    const title=c.k==='Milestone'?'Choisir Tâche ou Jalon':`${d}${editable?' — double-clic pour modifier':''}`;
+    return`<td class="${c.k==='Milestone'?'kind ':''}${['num','dur'].includes(c.type)?'nu':''}${/^_(ns|nf|nd|dl|sv|fv)$/.test(c.k)?' mg':''}" title="${title}"${pad}${editable?` data-e="${c.k}"`:''}>${inner}</td>`}).join('')+'</tr>').join('');
   const[t0,t1]=chartRange();
   const x=d=>(d-t0)/DAY*ppd+8,W=Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const oE=Math.max(...tasks.map(t=>+t.f)),nE=Math.max(...tasks.map(t=>+t.nf));
@@ -765,8 +929,9 @@ function render(){
   h+=shd+'</div>'+shd;
   rs.forEach(t=>{
     if(t.hdr){h+=`<div class="grh">${esc(t.hdr)} <em>(${t.n})</em></div>`;return}
-    const base=baselineOf(t);
-    const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}${base?`\nRéférence : ${fd(base.s)} → ${fd(base.f)}`:''}`;
+    const base=baselineOf(t),actual=actualOf(t);
+    const actualTip=actual.s||actual.f?`\nRéel : ${actual.s?fd(actual.s):'—'} → ${actual.f?(actual.provisional?'au statut ':'')+fd(actual.f):'—'}`:'';
+    const tip=`${t.v.Name}\nInitial : ${fd(t.s)} → ${fd(t.f)}\nAvec marge : ${fd(t.ns)} → ${fd(t.nf)}${base?`\nRéférence : ${fd(base.s)} → ${fd(base.f)}`:''}${actualTip}`;
     let b='';const cc=clsOf(t);
     if(baselineVisible()&&base){
       if(t.ms)b+=`<i class="m bl" style="left:${x(base.s)-3}px"></i>`;
@@ -776,6 +941,14 @@ function render(){
       b+=`<i class="n${cc}" style="left:${x(t.ns)}px;width:${Math.max(2,(t.nf-t.ns)/DAY*ppd)}px"></i>`;
       if(t.pct>0){const w=Math.max(2,(t.nf-t.ns)/DAY*ppd);b+=`<i class="pg" style="left:${x(t.ns)}px;width:${Math.max(1,w*t.pct/100)}px"></i>`;
         if(showO){const w0=Math.max(2,(t.f-t.s)/DAY*ppd);b+=`<i class="pgo" style="left:${x(t.s)}px;width:${Math.max(1,w0*t.pct/100)}px"></i>`}}}
+    if($('showA').checked){
+      if(actual.s&&actual.f&&+actual.f>=+actual.s){
+        if(t.ms)b+=`<i class="m a" style="left:${x(actual.s)-4}px"></i>`;
+        else b+=`<i class="a" style="left:${x(actual.s)}px;width:${Math.max(2,(actual.f-actual.s)/DAY*ppd)}px"></i>`;
+      }
+      if(actual.s)b+=`<i class="am" title="Début réel : ${fd(actual.s)}" style="left:${x(actual.s)}px"></i>`;
+      if(actual.f&&(!actual.s||+actual.f!==+actual.s))b+=`<i class="am" title="${actual.provisional?'Fin au statut':'Fin réelle'} : ${fd(actual.f)}" style="left:${x(actual.f)}px"></i>`;
+    }
     if(useCst()&&t.v.ConstraintDate){const cd=new Date(t.v.ConstraintDate);
       if(!isNaN(+cd)&&+cd>=t0-864e5&&+cd<=t1+864e5)b+=`<i style="position:absolute;left:${x(cd)}px;top:2px;height:22px;border-left:2px solid ${t.warn?'var(--cr)':'var(--ms)'}"></i>`}
     if(useCst()&&t.v.Deadline){const dl2=new Date(t.v.Deadline);
@@ -791,7 +964,7 @@ function render(){
       s+=`<i class="m" style="left:${x(s2)-4}px;top:${52+j*26+4}px;width:8px;height:8px;background:${t.pct+1<ex*100?'var(--cr)':'var(--ac)'}"></i>`});
     return s})();
   $('R').innerHTML=h+lk+td+pl+'</div>';
-  $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;$('bpptx').disabled=!doc;
+  $('bx').disabled=$('bc').disabled=$('bh').disabled=$('bp').disabled=false;$('bpptx').disabled=!doc;$('br').disabled=!doc;
   $('bBase').disabled=!doc;$('bBaseClear').disabled=!hasBaseline();
   if($('bAdd')){$('bAdd').disabled=!doc;['bDel','bUp','bDn','bInd','bOut'].forEach(i=>$(i).disabled=!doc||!selUid);
     $('bUn').disabled=!(hidx>0);$('bRe').disabled=!(hidx<hist.length-1)}
@@ -801,14 +974,19 @@ function defineBaseline(){
   const f=baselineFields();
   tasks.forEach(t=>{
     t.v[f.start]=iso(t.s);t.v[f.finish]=iso(t.f);
-    t.v[f.duration]=t.v.Duration||'PT0H0M0S';
+    const h=durationHours(t.v.Duration);
+    t.v[f.duration]=h===null?'PT0H0M0S':durPT(h);
+    const cost=taskCostMetric(t,'budget');
+    if(cost.value===null)delete t.v[f.cost];else t.v[f.cost]=String(cost.value);
   });
+  costCache=null;
   syncDom();saveHist();render();
 }
 function clearBaseline(){
   if(!hasBaseline())return;
   const f=baselineFields();
-  tasks.forEach(t=>{delete t.v[f.start];delete t.v[f.finish];delete t.v[f.duration]});
+  tasks.forEach(t=>{delete t.v[f.start];delete t.v[f.finish];delete t.v[f.duration];delete t.v[f.cost]});
+  costCache=null;
   syncDom();saveHist();render();
 }
 $('bBase').onclick=defineBaseline;$('bBaseClear').onclick=clearBaseline;
@@ -820,7 +998,7 @@ const closeMenu=()=>{if(menu){menu.remove();menu=null}};
 function openMenu(k,btn){
   closeMenu();
   const c=cols.find(c=>c.k===k),num=c.type!=='txt'&&c.type!=='bool',m=new Map();
-  tasks.forEach(t=>{const d=fmt(c,t.v[k]);if(!m.has(d))m.set(d,val(t,c))});
+  tasks.forEach(t=>{const d=formatColumn(t,c);if(!m.has(d))m.set(d,val(t,c))});
   const list=[...m.keys()].sort((a,b)=>cmpv(m.get(a),m.get(b)));
   const f=filt[k]||{};let sel=new Set(f.set||list),q='',shown=[];
   const ops=num?[['eq','égal à'],['ne','différent de'],['gt','supérieur à'],['lt','inférieur à'],['ge','supérieur ou égal à'],['le','inférieur ou égal à']]:[['contains','contient'],['notcontains','ne contient pas'],['eq','est égal à']];
@@ -900,7 +1078,7 @@ function linkPaths(rs,x,y0){
 
 /* ---- Export HTML / PDF : image fidèle de la vue courante ---- */
 function buildSVG(){
-  const vc=vcols(),rs=rows(),ppd=getPPD(),show=$('showO').checked,k=+$('k').value||1;
+  const vc=vcols(),rs=rows(),ppd=getPPD(),show=$('showO').checked,showA=$('showA').checked,k=+$('k').value||1;
   const[t0,t1]=chartRange();
   const RH=26,TOP=34,HH=40,TW=vc.reduce((a,c)=>a+c.w,0),GX=TW+6,W=GX+Math.ceil((t1-t0)/DAY*ppd)+60+(dsel().length?280:0);
   const y0=TOP+HH,H=y0+rs.length*RH+4,x=d=>GX+(d-t0)/DAY*ppd+8;
@@ -930,7 +1108,7 @@ function buildSVG(){
     if(t.uid===selUid)bg+=`<rect y="${ry}" width="${W}" height="${RH}" fill="#ece6f8"/>`;
     bg+=`<line x1="0" y1="${ry+RH}" x2="${W}" y2="${ry+RH}" stroke="#dfe4e0"/>`;
     vc.forEach((c,j)=>{
-      let d=fmt(c,t.v[c.k]),ix=6;const nu=['num','dur'].includes(c.type);
+      let d=formatColumn(t,c),ix=6;const nu=['num','dur','currency'].includes(c.type);
       if(c.k==='Name'){ix=6+(t.lvl-1)*16;if(sm)d=(collapsed.has(t.uid)?'▶ ':'▼ ')+d;else ix+=14}
       tx+=cell(xs[j],ry,c.w-2,RH,`<text x="${nu?c.w-8:ix}" y="17"${nu?' text-anchor="end"':''}${sm?' font-weight="600"':''} fill="${/^_(ns|nf|nd|dl)$/.test(c.k)?'#2f6fba':'#1d2b2a'}">${esc(d)}</text>`)});
     const base=baselineOf(t);
@@ -944,8 +1122,17 @@ function buildSVG(){
       if(t.pct>0){const w=Math.max(2,(t.nf-t.ns)/DAY*ppd);bars+=`<rect x="${x(t.ns)}" y="${ry+(sm?12:11)}" width="${Math.max(1,w*t.pct/100)}" height="${sm?8:11}" fill="#1d2b2a" opacity=".45"/>`;
         if(show){const w0=Math.max(2,(t.f-t.s)/DAY*ppd);bars+=`<rect x="${x(t.s)}" y="${ry+3}" width="${Math.max(1,w0*t.pct/100)}" height="6" fill="#1d2b2a" opacity=".3"/>`}}
     }
+    if(showA){
+      const actual=actualOf(t);
+      if(actual.s&&actual.f&&+actual.f>=+actual.s){
+        if(t.ms)bars+=dia(x(actual.s),ry+17,5,'#2b7a3d');
+        else bars+=`<rect x="${x(actual.s)}" y="${ry+7}" width="${Math.max(2,(actual.f-actual.s)/DAY*ppd)}" height="3" rx="1.5" fill="#2b7a3d"/>`;
+      }
+      if(actual.s)bars+=`<line x1="${x(actual.s)}" y1="${ry+4}" x2="${x(actual.s)}" y2="${ry+13}" stroke="#2b7a3d" stroke-width="2"/>`;
+      if(actual.f&&(!actual.s||+actual.f!==+actual.s))bars+=`<line x1="${x(actual.f)}" y1="${ry+4}" x2="${x(actual.f)}" y2="${ry+13}" stroke="#2b7a3d" stroke-width="2"/>`;
+    }
   });
-  rs.forEach((t,i)=>{if(t.hdr)return;const lt=detailText(t);if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
+  rs.forEach((t,i)=>{if(t.hdr)return;const lt=detailText(t),af=showA?(actualOf(t).f||0):0;if(lt)bars+=`<text x="${x(Math.max(+t.nf,show?+t.f:0,+af))+(t.ms?10:6)}" y="${y0+i*RH+18}" font-size="11" fill="#6b7a78">${esc(lt)}</text>`});
   const now=Date.now();if($('showT').checked&&now>=t0&&now<=t1)bars+=`<line x1="${x(now)}" y1="${TOP}" x2="${x(now)}" y2="${H}" stroke="#d33a2c" stroke-dasharray="4 3"/>`;
   if($('showP').checked){const s2=sdDate();if(+s2>=t0&&+s2<=t1)bars+=`<line x1="${x(s2)}" y1="${TOP}" x2="${x(s2)}" y2="${H}" stroke="#2b7a3d" stroke-dasharray="4 3"/>`}
   const lk=$('showL').checked?linkPaths(rs,x,y0).map(([d,c])=>`<path d="${d}" fill="none" stroke="${c==='pa'?'#8a4bd8':c==='cr'?'#d33a2c':'#6b7a78'}" stroke-width="${c?1.8:1}" marker-end="url(#ar)"/>`).join(''):'';
@@ -955,6 +1142,79 @@ function buildSVG(){
 function docHTML(){
   const{s,W,H}=buildSVG();
   return`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><title>${esc(fname)} – planning avec marge</title><style>@page{size:${W}px ${H}px;margin:0}html,body{margin:0;background:#fff}svg{display:block}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="Segoe UI,system-ui,sans-serif" font-size="12">${s}</svg></body></html>`;
+}
+function reportProjectMetric(key){
+  const project=tasks.find(t=>t.uid==='0'),direct=project?taskCostMetric(project,key):null;
+  if(direct&&direct.value!==null)return direct;
+  const phases=tasks.filter(t=>t.sum&&t.uid!=='0'&&t.kids.length&&(+t.v.OutlineLevel||t.lvl)===1);
+  if(phases.length)return sumCostMetrics(phases.map(t=>taskCostMetric(t,key)));
+  return sumCostMetrics(tasks.filter(t=>!t.kids.length&&!t.sum).map(t=>taskCostMetric(t,key)));
+}
+function projectResourceCosts(){
+  const totals=new Map();let unpriced=0;
+  tasks.filter(t=>!t.kids.length&&!t.sum).forEach(t=>(assignmentsByTask.get(t.uid)||[]).forEach(a=>{
+    const metric=assignmentCost(t,a,'budget'),resource=resourceByUid.get(a.resourceUid);
+    if(metric.value===null){unpriced++;return}
+    const key=a.resourceUid||'unknown',entry=totals.get(key)||{name:resource?.name||'Ressource inconnue',value:0,estimated:false};
+    entry.value+=metric.value;entry.estimated||=metric.estimated;totals.set(key,entry);
+  }));
+  return{rows:[...totals.values()].sort((a,b)=>b.value-a.value),unpriced};
+}
+function reportProjectHTML(){
+  const date=sdDate(),leaves=tasks.filter(t=>!t.kids.length&&!t.sum),done=leaves.filter(t=>t.pct>=100),
+    active=leaves.filter(t=>t.pct>0&&t.pct<100),notStarted=leaves.filter(t=>t.pct===0),
+    late=leaves.filter(t=>t.pct<100&&+date>+t.nf).sort((a,b)=>+a.nf- +b.nf),
+    critical=leaves.filter(t=>t.crit),phases=tasks.filter(t=>t.sum&&t.uid!=='0'&&t.kids.length&&(+t.v.OutlineLevel||t.lvl)===1),
+    milestones=leaves.filter(t=>t.ms&&+t.s>=+date).sort((a,b)=>+a.s- +b.s).slice(0,8),
+    scheduleStart=leaves.length?Math.min(...leaves.map(t=>+t.s)):NaN,
+    plannedFinish=leaves.length?Math.max(...leaves.map(t=>+t.f)):NaN,
+    forecastFinish=leaves.length?Math.max(...leaves.map(t=>+t.nf)):NaN,
+    budget=reportProjectMetric('budget'),actual=reportProjectMetric('actual'),
+    remaining=reportProjectMetric('remaining'),baseline=reportProjectMetric('baseline'),
+    variance={value:budget.value!==null&&baseline.value!==null?budget.value-baseline.value:null,
+      estimated:budget.estimated||baseline.estimated,partial:budget.partial||baseline.partial},
+    resourceData=projectResourceCosts(),projectTitle=g(doc.documentElement,'Title')||g(doc.documentElement,'Name')||fname,
+    formatDate=n=>Number.isFinite(n)?fd(new Date(n)):'—',
+    money=m=>esc(costMetricText(m)),
+    phaseRows=phases.map(t=>`<tr><td>${esc(t.v.Name||'')}</td><td>${money(taskCostMetric(t,'budget'))}</td><td>${money(taskCostMetric(t,'actual'))}</td><td>${money(taskCostMetric(t,'baseline'))}</td></tr>`).join(''),
+    resourceRows=resourceData.rows.slice(0,10).map(r=>`<tr><td>${esc(r.name)}</td><td>${r.estimated?'Estimé':'Importé'}</td><td>${esc(formatMoney(r.value))}</td></tr>`).join(''),
+    lateRows=late.slice(0,10).map(t=>`<tr><td>${esc(t.v.ID||'')}</td><td>${esc(t.v.Name||'')}</td><td>${esc(fd(t.nf))}</td><td>${Math.round(t.pct)} %</td><td>${t.crit?'Oui':'—'}</td></tr>`).join(''),
+    milestoneRows=milestones.map(t=>`<tr><td>${esc(fd(t.s))}</td><td>${esc(t.v.Name||'')}</td><td>${t.crit?'Critique':'—'}</td></tr>`).join(''),
+    costTasks=leaves.map(t=>taskCostMetric(t,'budget')),
+    unknownCosts=costTasks.filter(m=>m.value===null).length,
+    incompleteCosts=costTasks.filter(m=>m.value!==null&&m.partial).length,
+    averageProgress=leaves.length?Math.round(leaves.reduce((sum,t)=>sum+t.pct,0)/leaves.length):0;
+  return`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rapport — ${esc(projectTitle)}</title><style>
+    :root{font:14px/1.45 "Segoe UI",Arial,sans-serif;color:#1d2b2a;background:#f4f6f3}*{box-sizing:border-box}body{margin:0;padding:28px;max-width:1180px;margin-inline:auto}header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px}h1{font-size:26px;margin:0}h2{font-size:17px;margin:0 0 12px}p{color:#64716e;margin:5px 0}.stamp{white-space:nowrap;color:#64716e}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:16px 0 22px}.card,section{background:#fff;border:1px solid #dfe4e0;border-radius:10px;padding:16px}.card small{display:block;color:#64716e}.card strong{display:block;margin-top:8px;font-size:21px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:14px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #e6ebe8;vertical-align:top}th{color:#64716e;font-weight:600;background:#f4f6f3}td:nth-child(n+2):not(:nth-child(2)){white-space:nowrap}.note{font-size:12px;color:#64716e;background:#f4f6f3;border-left:3px solid #d9791c;padding:9px 11px;margin-top:12px}.bar{height:8px;background:#e6ebe8;border-radius:99px;overflow:hidden;margin-top:9px}.bar i{display:block;height:100%;background:#2b7a3d}button{border:0;border-radius:6px;padding:8px 13px;background:#2b7a3d;color:#fff;cursor:pointer}@media print{body{padding:10mm;max-width:none;background:#fff}.card,section{break-inside:avoid;box-shadow:none}.no-print{display:none}.grid{grid-template-columns:1fr 1fr}}@media(max-width:700px){body{padding:14px}header{display:block}.stamp{margin-top:8px}.grid{grid-template-columns:1fr}}
+    </style></head><body><header><div><h1>${esc(projectTitle)}</h1><p>Rapport de projet · ${esc(fname)}</p><p>Date de statut : <b>${esc(fd(date))}</b> · Généré le ${esc(fd(new Date()))}</p></div><div class="no-print"><button onclick="window.print()">Imprimer / PDF</button></div></header>
+    <div class="cards">
+      <div class="card"><small>Budget / coût prévu</small><strong>${money(budget)}</strong><small>${budget.estimated?'Estimation':'Coût MSP'}</small></div>
+      <div class="card"><small>Coût réel enregistré</small><strong>${money(actual)}</strong><small>${actual.value===null?'Aucune donnée de coût réel importée':'Depuis les coûts ou travaux réels MSP'}</small></div>
+      <div class="card"><small>Coût restant</small><strong>${money(remaining)}</strong><small>Valeur MSP ou budget moins réel</small></div>
+      <div class="card"><small>Écart au budget de référence</small><strong>${money(variance)}</strong><small>Coût prévu − BaselineCost</small></div>
+    </div>
+    <div class="grid">
+      <section><h2>État du calendrier</h2><table><tbody>
+        <tr><th>Tâches terminées</th><td>${done.length}</td><th>En cours</th><td>${active.length}</td></tr>
+        <tr><th>À démarrer</th><td>${notStarted.length}</td><th>En retard</th><td>${late.length}</td></tr>
+        <tr><th>Chemin critique</th><td>${critical.length} tâche(s)</td><th>Avancement moyen</th><td>${averageProgress} %</td></tr>
+        <tr><th>Début du projet</th><td>${esc(formatDate(scheduleStart))}</td><th>Fin initiale</th><td>${esc(formatDate(plannedFinish))}</td></tr>
+        <tr><th>Fin avec marge</th><td colspan="3">${esc(formatDate(forecastFinish))}</td></tr>
+      </tbody></table><div class="bar"><i style="width:${averageProgress}%"></i></div></section>
+      <section><h2>Budget par phase</h2><table><thead><tr><th>Phase</th><th>Prévu / estimé</th><th>Réel</th><th>Référence</th></tr></thead><tbody>${phaseRows||'<tr><td colspan="4">Aucune phase récapitulative.</td></tr>'}</tbody></table></section>
+    </div>
+    <div class="grid">
+      <section><h2>Coût estimé par ressource</h2><table><thead><tr><th>Ressource</th><th>Source</th><th>Montant</th></tr></thead><tbody>${resourceRows||'<tr><td colspan="3">Aucune ressource avec tarif exploitable.</td></tr>'}</tbody></table>${resourceData.unpriced?`<p class="note">${resourceData.unpriced} affectation(s) sans coût ni taux exploitable.</p>`:''}</section>
+      <section><h2>Prochains jalons</h2><table><thead><tr><th>Date</th><th>Jalon</th><th>Chemin critique</th></tr></thead><tbody>${milestoneRows||'<tr><td colspan="3">Aucun jalon à venir à la date de statut.</td></tr>'}</tbody></table></section>
+    </div>
+    <section><h2>Tâches en retard</h2><table><thead><tr><th>ID</th><th>Tâche</th><th>Fin prévue</th><th>Avancement</th><th>Critique</th></tr></thead><tbody>${lateRows||'<tr><td colspan="5">Aucune tâche en retard.</td></tr>'}</tbody></table>${late.length>10?`<p>Affichage des 10 premières sur ${late.length} tâches en retard.</p>`:''}</section>
+    <section style="margin-top:14px"><h2>Sources et limites des données de coût</h2>
+      <p>Devise : ${currencyKnown?esc(currencyCode):`${esc(currencyCode)} par défaut (aucun code devise dans le fichier)`}.</p>
+      <p>Les coûts saisis par MS Project sont prioritaires. À défaut, l’estimation utilise les taux standard des ressources × le travail d’affectation ; si ce travail manque, elle utilise la durée de la tâche × les unités affectées. Les coûts fixes et coûts par utilisation sont inclus lorsqu’ils sont présents.</p>
+      <p>~ = estimation calculée ; * = données partielles. ${unknownCosts} tâche(s) feuille sans budget calculable${incompleteCosts?`; ${incompleteCosts} tâche(s) avec affectations ou descendants incomplets`:''}.</p>
+      <p>${actual.value===null?'Les coûts réels ne sont pas renseignés dans le fichier ; le rapport ne les déduit pas du pourcentage d’avancement.':'Les coûts réels utilisent ActualCost ou, à défaut, ActualWork × taux standard.'} Un coût de référence n’est affiché que si BaselineCost est présent (ou si une baseline a été définie dans l’application).</p>
+    </section>
+    </body></html>`;
 }
 $('bh').onclick=()=>dl(fname+'-avec-marge.html',docHTML(),'text/html');
 $('bp').onclick=()=>{
@@ -967,9 +1227,10 @@ $('bp').onclick=()=>{
 
 /* ---- Exports, colonnes, scroll ---- */
 const dl=(n,txt,type)=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=n;a.click()};
+$('br').onclick=()=>dl(fname+'-rapport-projet.html',reportProjectHTML(),'text/html');
 $('bc').onclick=()=>{
   const vc=vcols(),q=v=>`"${String(v).replace(/"/g,'""')}"`;
-  dl(fname+'-avec-marge.csv','\ufeff'+[vc.map(c=>q(c.label)).join(';'),...rows().map(t=>vc.map(c=>q((c.k==='Name'?'  '.repeat(t.lvl-1):'')+fmt(c,t.v[c.k]))).join(';'))].join('\r\n'),'text/csv');
+  dl(fname+'-avec-marge.csv','\ufeff'+[vc.map(c=>q(c.label)).join(';'),...rows().map(t=>vc.map(c=>q((c.k==='Name'?'  '.repeat(t.lvl-1):'')+formatColumn(t,c))).join(';'))].join('\r\n'),'text/csv');
 };
 $('bx').onclick=()=>{
   const k=+$('k').value||1;
@@ -988,8 +1249,8 @@ $('bx').onclick=()=>{
         const ms=useCal()?workDiff(calOf(t),t.ns,t.nf):+t.nf-+t.ns;
         mins=Math.max(0,Math.round(ms/60000));
       }else{
-        const m=/^PT(\d+)H(\d+)M(\d+)S$/.exec(g(t.el,'Duration')||'');
-        if(m)mins=Math.max(0,Math.round((+m[1]*60+ +m[2])*k));
+        const h=durationHours(g(t.el,'Duration'));
+        if(h!==null)mins=Math.max(0,Math.round(h*60*k));
       }
       if(mins!==undefined)set('Duration',`PT${Math.floor(mins/60)}H${mins%60}M0S`);
     }
@@ -1037,7 +1298,7 @@ $('vpan').addEventListener('change',e=>{if(e.target.dataset.d)render()});
 let supClick=0;
 const pick=e=>{
   if(supClick){supClick=0;return}
-  if(e.target.closest('[data-m],.tg'))return;
+  if(e.target.closest('[data-m],.tg,select[data-task-type]'))return;
   const r=e.target.closest('[data-u]');if(!r)return;
   const u=r.dataset.u;
   if(e.shiftKey&&selUid){const rs=rows(),i0=rs.findIndex(o=>o.uid===selUid),i1=rs.findIndex(o=>o.uid===u);
@@ -1047,6 +1308,9 @@ const pick=e=>{
   multi=new Set();selUid=selUid===u?null:u;render();
 };
 $('L').addEventListener('click',e=>{
+  const typeButton=e.target.closest('button[data-task-type]');
+  if(typeButton){const t=byUid[typeButton.dataset.taskType],makeMilestone=typeButton.dataset.taskValue==='1';
+    if(t&&makeMilestone!==t.ms&&applyEdit(t,'Milestone',typeButton.dataset.taskValue)){saveHist();render()}return}
   if(e.detail===2){const td=e.target.closest('td[data-e]');if(td){const t=byUid[td.parentElement.dataset.u];if(t){startEdit(td,t,td.dataset.e);return}}}
   pick(e)});
 $('R').addEventListener('click',pick);
@@ -1179,7 +1443,7 @@ async function load(f){
 $('file').onchange=e=>e.target.files[0]&&load(e.target.files[0]);
 $('calOn').oninput=()=>{applyCals();render()};
 $('calSel').oninput=()=>{applyCals();render()};
-['k','mode','zoom','showO','showB','showL','showC','showT','showP','sd','useC','pm'].forEach(i=>$(i).oninput=render);
+['k','mode','zoom','showO','showB','showA','showL','showC','showT','showP','sd','useC','pm'].forEach(i=>$(i).oninput=render);
 addEventListener('dragover',e=>e.preventDefault());
 addEventListener('drop',e=>{e.preventDefault();e.dataTransfer.files[0]&&load(e.dataTransfer.files[0])});
 </script>

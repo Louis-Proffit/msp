@@ -87,7 +87,10 @@ test('annual recurring exception matches month and weekday position', () => {
 });
 
 test('workday duration parsing accepts MS Project formats', () => {
-  const ctx = evaluateRange('function parseDurInput', 'function parseUser', { dayH: 8 });
+  const ctx = evaluateRange('function durationHours', 'function parseDurInput', { dayH: 8 });
+  const start = script.indexOf('function parseDurInput');
+  const end = script.indexOf('function parseDateFr', start);
+  vm.runInNewContext(script.slice(start, end), ctx);
   assert.equal(vm.runInContext('parseDurInput("3j")', ctx), 24);
   assert.equal(vm.runInContext('parseDurInput("24h")', ctx), 24);
   assert.equal(vm.runInContext('parseDurInput("PT8H30M")', ctx), 8.5);
@@ -122,4 +125,61 @@ test('hierarchy renumbering updates WBS and outline numbers', () => {
   assert.equal(vm.runInContext('tasks[1].v.WBS', ctx), '1.1');
   assert.equal(vm.runInContext('tasks[1].v.OutlineLevel', ctx), '2');
   assert.equal(vm.runInContext('tasks[2].v.WBS', ctx), '2');
+});
+
+test('duration parser supports numeric milliseconds and ISO 8601', () => {
+  const ctx = evaluateRange('function durationHours', 'function durationMs');
+  assert.equal(vm.runInNewContext('durationHours("28800000")', ctx), 8);
+  assert.equal(vm.runInNewContext('durationHours("PT8H30M")', ctx), 8.5);
+  assert.equal(vm.runInNewContext('durationHours("P5D")', ctx), 120);
+  assert.equal(vm.runInNewContext('durationHours("invalid")', ctx), null);
+});
+
+test('actual task dates use explicit finish or the status date for ongoing work', () => {
+  const ctx = evaluateRange('function sdDate()', 'function baselineOf', {
+    $: () => ({ value: '2025-01-10' })
+  });
+  const explicit = vm.runInContext(`actualOf({v:{
+    ActualStart:'2025-01-06T08:00:00',ActualFinish:'2025-01-08T17:00:00'
+  },pct:100})`, ctx);
+  assert.equal(explicit.s.toISOString(), new Date('2025-01-06T08:00:00').toISOString());
+  assert.equal(explicit.f.toISOString(), new Date('2025-01-08T17:00:00').toISOString());
+
+  const ongoing = vm.runInContext(`actualOf({v:{ActualStart:'2025-01-06'},pct:50})`, ctx);
+  assert.equal(ongoing.f.toISOString(), new Date(2025, 0, 10, 12).toISOString());
+  assert.equal(ongoing.provisional, true);
+  const notStarted = vm.runInContext(`actualOf({v:{ActualStart:'2025-01-15'},pct:0})`, ctx);
+  assert.equal(notStarted.f, null);
+});
+
+test('cost metrics estimate assignments from rates and duration, then prefer MSP actuals', () => {
+  const ctx = evaluateRange('function durationHours', 'function durationMs', { dayH: 8 });
+  const start = script.indexOf('function numericValue(raw)');
+  const end = script.indexOf('function actualOf(t)', start);
+  vm.runInNewContext(script.slice(start, end), ctx);
+  ctx.resourceByUid = new Map([['r1', {
+    standardRate: 50, rateFormat: 2, costPerUse: 0
+  }]]);
+  ctx.assignmentsByTask = new Map([['t1', [{
+    resourceUid: 'r1', units: 0.5, Work: null, Cost: null
+  }]]]);
+  ctx.defaultRate = null;
+  ctx.minutesPerDay = 480;
+  ctx.minutesPerWeek = 2400;
+  ctx.daysPerMonth = 20;
+  ctx.costCache = null;
+  ctx.task = { uid: 't1', v: { Duration: '28800000' }, kids: [] };
+
+  const estimated = vm.runInContext('taskCostMetrics(task)', ctx);
+  assert.equal(estimated.budget.value, 200);
+  assert.equal(estimated.budget.estimated, true);
+  assert.equal(estimated.actual.value, null);
+
+  vm.runInContext(`task.v.Cost='300';task.v.ActualCost='80';task.v.BaselineCost='250';costCache=null`, ctx);
+  const tracked = vm.runInContext('taskCostMetrics(task)', ctx);
+  assert.equal(tracked.budget.value, 300);
+  assert.equal(tracked.budget.estimated, false);
+  assert.equal(tracked.actual.value, 80);
+  assert.equal(tracked.remaining.value, 220);
+  assert.equal(tracked.variance.value, 50);
 });
