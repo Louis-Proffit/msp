@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Planning avec marge</title>
+<title>MSP · Planning avec marge</title>
 <style>
 :root{--ti:#2b7a3d;--rb:#f3f4f2;--cr:#d33a2c;--pa:#8a4bd8;--bg:#f6f7f4;--pn:#fff;--tx:#1d2b2a;--mu:#6b7a78;--ln:#dfe4e0;--or:#aab4b2;--nw:#2f6fba;--su:#1b2a3a;--ms:#d9791c;--ac:#2b7a3d;--hd:#eef1ee}
 @media (prefers-color-scheme:dark){:root{--ti:#1e5a2e;--rb:#1f2926;--cr:#ff6b5c;--pa:#b48cf5;--bg:#121816;--pn:#1a2220;--tx:#e6ecea;--mu:#8b9a97;--ln:#2b3633;--or:#5d6b68;--nw:#6aa8ee;--su:#9bb7d8;--ms:#f09a45;--ac:#5bbd72;--hd:#212b28}}
@@ -88,7 +88,7 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 </style>
 </head>
 <body>
-<div id="title"><b class="logo">P</b><span id="ttl">Planning avec marge</span><span class="sub">· import XML MS Project</span></div>
+<div id="title"><b class="logo">M</b><span id="ttl">MSP — Planning avec marge</span><span class="sub">· import XML MS Project</span></div>
 <header id="rib">
 <nav id="tabs"><button data-t="f">Fichier</button><button data-t="t" class="on">Tâche</button><button data-t="p">Projet</button><button data-t="v">Affichage</button><button data-t="m">Format</button></nav>
 <input type="file" id="file" accept=".xml,.mpp" hidden>
@@ -101,8 +101,8 @@ th,.gh{background:linear-gradient(var(--pn),var(--hd))}
 <div class="bar" id="tab-t">
 <section class="g"><div class="row"><span id="lv"></span></div><h5>Hiérarchie</h5></section>
 <section class="g"><div class="row"><button class="big" id="bAdd" disabled><i>➕</i>Ajouter</button><button class="big" id="bDel" disabled><i>🗑️</i>Suppr.</button><button class="big" id="bUp" disabled><i>⬆️</i>Monter</button><button class="big" id="bDn" disabled><i>⬇️</i>Descendre</button><button class="big" id="bInd" disabled><i>↪️</i>Indenter</button><button class="big" id="bOut" disabled><i>↩️</i>Désind.</button><button class="big" id="bUn" disabled><i>↶</i>Annuler</button><button class="big" id="bRe" disabled><i>↷</i>Rétablir</button></div><h5>Édition</h5></section>
-<section class="g"><div class="row"><label>Regrouper <select id="grp"></select></label><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
-<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner (Ctrl+clic : sélection multiple, Maj+clic : plage). Double-clic (ou F2/Entrée sur la ligne sélectionnée) sur une cellule soulignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Gantt : glisser une barre pour déplacer la tâche, tirer son bord droit pour changer la fin, tirer le bord droit vers une autre barre pour créer un lien FD. Colonnes « Prédécesseurs » et « Successeurs » éditables (« 1FD+2j »). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
+<section class="g"><div class="row"><label>🔍 <input type="search" id="q" placeholder="Rechercher…" style="width:150px" title="Recherche rapide sur le nom / ID (Ctrl+F)"></label><label>Regrouper <select id="grp"></select></label><details class="dd"><summary class="big"><i>▦</i>Colonnes ▾</summary><div class="pan" id="pan"></div></details><button class="big" id="bf"><i>🧹</i>Effacer filtres/tri</button></div><h5>Tableau</h5></section>
+<section class="g"><div class="row"><span class="hint">Clic sur ▾ d'un en-tête : trier / filtrer. « Regrouper » : groupe les lignes par la colonne choisie. Clic sur une ligne : la sélectionner (Ctrl+clic : sélection multiple, Maj+clic : plage). Double-clic (ou F2/Entrée sur la ligne sélectionnée) sur une cellule soulignée : modifier (toutes les colonnes sauf calculées). Clic droit : menu d'édition (ajouter/supprimer/déplacer/indenter). Gantt : glisser une barre pour déplacer la tâche, tirer son bord droit pour changer la fin, tirer le bord droit vers une autre barre pour créer un lien FD. Colonnes « Prédécesseurs » et « Successeurs » éditables (« 1FD+2j »). Séparateur central : glisser pour élargir le tableau. Suppr : supprimer. Ctrl+C / Ctrl+V : copier / coller les tâches sélectionnées (avec leurs sous-tâches et liens internes). Ctrl+F : recherche rapide (nom ou ID). Ctrl+Z / Ctrl+Y : annuler / rétablir.</span></div><h5>Aide</h5></section>
 </div>
 
 <div class="bar" id="tab-p" hidden>
@@ -138,7 +138,7 @@ const LAB={ID:'ID',UID:'UID',Name:'Nom',OutlineLevel:'Niveau',WBS:'WBS',OutlineN
 const CT=['Dès que possible','Le plus tard possible','Doit commencer le','Doit finir le','Début au plus tôt','Début au plus tard','Fin au plus tôt','Fin au plus tard'];
 const BOOL=new Set(['Summary','Milestone','Critical','Active','Manual','Estimated','IsNull','Rollup','Recurring','External','Marked','HideBar']);
 const PRIO=['ID','Name','Duration','Start','Finish','PercentComplete','_pred','_res','_ns','_nf','_nd','_dl'];
-let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null,multi=new Set();
+let doc,tasks=[],roots=[],byUid={},cols=[],vis=new Set(),sort=null,filt={},collapsed=new Set(),fname='planning',cals={},projCalUid=null,defCalUid=null,dayH=8,hist=[],hidx=-1,grp=null,multi=new Set(),qsearch='',clip=null;
 const err=m=>{$('msg').textContent=m;$('msg').style.display=m?'block':'none'};
 
 /* ---- Calendriers : calcul en temps ouvré ---- */
@@ -429,6 +429,28 @@ function moveTask(dir){const t=byUid[selUid];if(!doc||!t)return;const sib=t.pare
 function indent(){const t=byUid[selUid];if(!doc||!t)return;const i=tasks.indexOf(t);
   if(i<=0||tasks[i-1].lvl<t.lvl)return;t.lvl++;rebuildTree();syncDom();saveHist();render()}
 function outdent(){const t=byUid[selUid];if(!doc||!t||t.lvl<=1)return;t.lvl--;rebuildTree();syncDom();saveHist();render()}
+/* ---- Copier / coller / dupliquer des tâches (avec descendants et liens internes) ---- */
+function selTree(){const sel=new Set(multi);if(selUid)sel.add(selUid);
+  const list=[...sel].map(u=>byUid[u]).filter(Boolean);if(!list.length)return null;
+  const all=new Set();const collect=x=>{all.add(x.uid);x.kids.forEach(collect)};list.forEach(collect);
+  return[...all].map(u=>byUid[u])}
+function copyTasks(){const l=selTree();if(!l)return;
+  clip=l.map(t=>({uid:t.uid,v:{...t.v},lvl:t.lvl,s:+t.s,f:+t.f,ms:t.ms,sum:t.sum,preds:t.preds.map(p=>({...p}))}))}
+function pasteTasks(){if(!clip||!clip.length||!doc)return;
+  const sel=byUid[selUid];
+  let maxUid=0,maxId=0;tasks.forEach(t=>{maxUid=Math.max(maxUid,+t.uid||0);maxId=Math.max(maxId,+t.v.ID||0)});
+  const base=clip[0].lvl,targetLvl=sel?sel.lvl:1,map={};
+  const news=clip.map((o,i)=>{
+    const uid=String(maxUid+1+i),id=String(maxId+1+i);
+    const v={...o.v,UID:uid,ID:id,Name:o.v.Name+(clip.length>1?'':' (copie)')};
+    const t={uid,v,lvl:Math.max(1,o.lvl-base+targetLvl),sum:o.sum,ms:o.ms,s:new Date(o.s),f:new Date(o.f),kids:[],parent:null,preds:[],el:null};
+    map[o.uid]=uid;return t});
+  news.forEach((t,i)=>{t.preds=clip[i].preds.filter(p=>map[p.uid]).map(p=>({uid:map[p.uid],type:p.type,lag:p.lag}))});
+  let idx=tasks.length;
+  if(sel){idx=tasks.indexOf(sel)+1;while(idx<tasks.length&&tasks[idx].lvl>sel.lvl)idx++}
+  tasks.splice(idx,0,...news);news.forEach(t=>byUid[t.uid]=t);
+  rebuildTree();syncDom();refreshLinks();selUid=news[0].uid;multi=new Set();saveHist();render()}
+function dupTasks(){copyTasks();pasteTasks()}
 function parseDurInput(s){s=s.trim().toLowerCase();let m;
   if(m=/^(\d+(?:[.,]\d+)?)\s*j/.exec(s))return +m[1].replace(',','.')*dayH;
   if(m=/^(\d+(?:[.,]\d+)?)\s*h/.exec(s))return +m[1].replace(',','.');
@@ -507,7 +529,7 @@ function rawVal(t,k){if(k==='Start')return fd(t.s);if(k==='Finish')return fd(t.f
   const c=cols.find(c=>c.k===k);
   if(c&&c.type==='date'&&t.v[k])return fd(new Date(t.v[k]));
   return c?fmt(c,t.v[k]||''):(t.v[k]||'')}
-function startEdit(td,t,k){selUid=t.uid;const inp=document.createElement('input');inp.value=rawVal(t,k);inp.style.cssText='width:100%;padding:2px 4px';
+function startEdit(td,t,k){if(td.querySelector('input'))return;selUid=t.uid;const inp=document.createElement('input');inp.value=rawVal(t,k);inp.style.cssText='width:100%;padding:2px 4px';
   td.textContent='';td.appendChild(inp);inp.focus();inp.select();let done=0;
   inp.onblur=()=>{if(done)return;done=1;applyEdit(t,k,inp.value);saveHist();render()};
   inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();inp.blur()}else if(e.key==='Escape'){done=1;render()}}}
@@ -554,6 +576,11 @@ function rows(){
   const act=cols.filter(c=>filt[c.k]);let keep=null;
   if(act.length){keep=new Set();
     tasks.forEach(t=>{if(act.every(c=>pass(t,c,filt[c.k])))for(let p=t;p&&!keep.has(p);p=p.parent)keep.add(p)})}
+  const q=qsearch.trim().toLowerCase();
+  if(q){const ms=new Set();
+    tasks.forEach(t=>{if((t.v.Name||'').toLowerCase().includes(q)||String(t.v.ID||'')===q)ms.add(t)});
+    tasks.forEach(t=>{if(ms.has(t))for(let p=t.parent;p&&!ms.has(p);p=p.parent)ms.add(p)});
+    keep=keep?new Set([...keep].filter(x=>ms.has(x))):ms}
   const out=[],sc=sort&&cols.find(c=>c.k===sort.k);
   const walk=l=>{
     let a=keep?l.filter(t=>keep.has(t)):l;
@@ -691,6 +718,9 @@ addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();closeCtx()}
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo()}
   else if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo()}
   else if(e.key==='Delete'&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea')))delTask()
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='c'&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea'))){e.preventDefault();copyTasks()}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='v'&&doc&&clip&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea'))){e.preventDefault();pasteTasks()}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='f'){e.preventDefault();$('q').focus();$('q').select()}
   else if((e.key==='F2'||e.key==='Enter')&&doc&&selUid&&!(e.target&&e.target.closest&&e.target.closest('input,select,textarea'))){
     const tr=document.querySelector('#tb tr[data-u="'+CSS.escape(selUid)+'"]'),td=tr&&tr.querySelector('td[data-e="Name"]');
     if(td&&byUid[selUid])startEdit(td,byUid[selUid],'Name')}});
@@ -798,7 +828,8 @@ $('bx').onclick=()=>{
 function setVis(all){vis=new Set(all?cols.map(c=>c.k):PRIO.filter(k=>cols.some(c=>c.k===k)));
   $('pan').querySelectorAll('input').forEach(i=>i.checked=vis.has(i.dataset.c));buildHead();render()}
 $('pan').addEventListener('change',e=>{const k=e.target.dataset.c;if(!k)return;e.target.checked?vis.add(k):vis.delete(k);buildHead();render()});
-$('bf').onclick=()=>{sort=null;filt={};if(doc){buildHead();render()}};
+$('bf').onclick=()=>{sort=null;filt={};qsearch='';$('q').value='';if(doc){buildHead();render()}};
+$('q').oninput=e=>{qsearch=e.target.value;if(doc)render()};
 $('grp').onchange=e=>{grp=e.target.value||null;render()};
 
 /* ---- Séparateur tableau / Gantt (glisser-déposer, mémorisé) ---- */
@@ -814,12 +845,12 @@ try{const s=+localStorage.getItem('msp-split');if(s>0)$('L').style.width=s+'px'}
 let ctx=null;
 function closeCtx(){if(ctx){ctx.remove();ctx=null}}
 function openCtx(x,y,u){closeCtx();selUid=u;render();
-  const acts=[['➕ Ajouter une tâche','add'],['🗑️ Supprimer','del'],['⬆️ Monter','up'],['⬇️ Descendre','dn'],['↪️ Indenter','ind'],['↩️ Désindenter','outd'],'hr',['↶ Annuler','un'],['↷ Rétablir','re']];
+  const acts=[['➕ Ajouter une tâche','add'],['📋 Copier','copy'],['📄 Coller','paste'],['⧉ Dupliquer','dup'],['🗑️ Supprimer','del'],['⬆️ Monter','up'],['⬇️ Descendre','dn'],['↪️ Indenter','ind'],['↩️ Désindenter','outd'],'hr',['↶ Annuler','un'],['↷ Rétablir','re']];
   ctx=document.createElement('div');ctx.className='menu';
-  ctx.style.left=Math.max(4,Math.min(x,innerWidth-262))+'px';ctx.style.top=Math.max(4,Math.min(y,innerHeight-190))+'px';
-  ctx.innerHTML=acts.map(a=>a==='hr'?'<hr>':`<a data-a="${a[1]}">${a[0]}</a>`).join('');
-  ctx.onclick=e=>{const a=e.target.closest('[data-a]');if(!a)return;closeCtx();
-    ({add:addTask,del:delTask,up:()=>moveTask(-1),dn:()=>moveTask(1),ind:indent,outd:outdent,un:undo,re:redo})[a.dataset.a]()};
+  ctx.style.left=Math.max(4,Math.min(x,innerWidth-262))+'px';ctx.style.top=Math.max(4,Math.min(y,innerHeight-260))+'px';
+  ctx.innerHTML=acts.map(a=>a==='hr'?'<hr>':`<a data-a="${a[1]}"${a[1]==='paste'&&!clip?' class="off"':''}>${a[0]}</a>`).join('');
+  ctx.onclick=e=>{const a=e.target.closest('[data-a]');if(!a||a.classList.contains('off'))return;closeCtx();
+    ({add:addTask,copy:copyTasks,paste:pasteTasks,dup:dupTasks,del:delTask,up:()=>moveTask(-1),dn:()=>moveTask(1),ind:indent,outd:outdent,un:undo,re:redo})[a.dataset.a]()};
   document.body.appendChild(ctx)}
 $('L').addEventListener('contextmenu',e=>{const r=e.target.closest('[data-u]');if(r){e.preventDefault();openCtx(e.clientX,e.clientY,r.dataset.u)}});
 $('R').addEventListener('contextmenu',e=>{const r=e.target.closest('[data-u]');if(r){e.preventDefault();openCtx(e.clientX,e.clientY,r.dataset.u)}});
@@ -848,7 +879,6 @@ $('L').addEventListener('click',e=>{
   if(e.detail===2){const td=e.target.closest('td[data-e]');if(td){const t=byUid[td.parentElement.dataset.u];if(t){startEdit(td,t,td.dataset.e);return}}}
   pick(e)});
 $('R').addEventListener('click',pick);
-$('L').addEventListener('dblclick',e=>{const td=e.target.closest('td[data-e]');if(!td)return;const t=byUid[td.parentElement.dataset.u];if(t)startEdit(td,t,td.dataset.e)});
 
 /* ---- Édition graphique dans le Gantt : déplacer / redimensionner / lier ---- */
 let gdrag=null;

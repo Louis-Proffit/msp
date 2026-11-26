@@ -1,6 +1,6 @@
 # Planning avec marge
 
-Application web monopage (`planning-avec-marge.html`) qui importe un planning exporté depuis **Microsoft Project au format XML** et produit une **version « avec marge »** : chaque durée est multipliée par un coefficient, puis toutes les dates sont recalculées en respectant les liens de dépendance entre tâches.
+Application web monopage (`msp.html`) qui importe un planning exporté depuis **Microsoft Project au format XML** et produit une **version « avec marge »** : chaque durée est multipliée par un coefficient, puis toutes les dates sont recalculées en respectant les liens de dépendance entre tâches.
 
 ## Fonctionnement général
 
@@ -61,7 +61,9 @@ Le planning n'est plus en lecture seule (toutes les modifications sont répercut
 - **Suppr.** (ou touche `Suppr`) : supprime la tâche sélectionnée et tout son sous-arbre, et retire les liens qui la ciblaient.
 - **Monter / Descendre** : réordonne la tâche parmi ses frères. **Indenter / Désindenter** : change son niveau hiérarchique (elle devient enfant de la tâche précédente / remonte d'un niveau).
 - **Édition en ligne** : double-clic sur une cellule soulignée (ou **F2 / Entrée** sur la ligne sélectionnée pour éditer le nom) — **toutes les colonnes** sont éditables (sauf UID, récapitulatif, niveau, ressources et colonnes calculées) : nom, durée (`3j`, `24h`, `PT8H0M`), dates (`jj/mm/aaaa`), nombres, booléens (Oui/Non), textes libres, **prédécesseurs** et **successeurs** au format MS Project (`1FD`, `2FF+1j`, séparés par des virgules ; vider la cellule supprime tous les liens). `Entrée` valide, `Échap` annule. Modifier une date ou une durée recalcule l'autre, et tout le planning avec marge est recalculé (liens compris). Passer une tâche en jalon (`Milestone` = Oui) la réduit à un losange.
-- **Menu contextuel** : clic droit sur une ligne (tableau ou Gantt) → Ajouter / Supprimer / Monter / Descendre / Indenter / Désindenter / Annuler / Rétablir.
+- **Menu contextuel** : clic droit sur une ligne (tableau ou Gantt) → Ajouter / **Copier** / **Coller** / **Dupliquer** / Supprimer / Monter / Descendre / Indenter / Désindenter / Annuler / Rétablir.
+- **Copier / Coller** (`Ctrl+C` / `Ctrl+V`, ou menu contextuel) : copie les tâches sélectionnées **avec tout leur sous-arbre** et les liens internes (les liens vers des tâches non copiées sont abandonnés). Le collage insère les copies après la tâche sélectionnée, avec de nouveaux UID/ID et un niveau hiérarchique relatif conservé (« (copie) » ajouté au nom quand on copie une seule tâche). **Dupliquer** (⧉) = copier + coller immédiat.
+- **Recherche rapide** (`Ctrl+F` ou champ 🔍 de l'onglet Tâche) : filtre les lignes affichées sur le nom ou l'ID (les tâches trouvées et leurs parents restent visibles, la hiérarchie est préservée). Le bouton « Effacer filtres/tri » vide aussi cette recherche.
 - **Colonnes « Prédécesseurs » et « Successeurs » éditables** : saisir les liens au format MS Project (`2FD`, `3FF+1j`, séparés par des virgules ; vider = supprimer). Éditer les successeurs d'une tâche remplace tous ses liens sortants. Les liens circulaires sont refusés.
 
 ## Édition graphique dans le Gantt
