@@ -183,3 +183,73 @@ test('cost metrics estimate assignments from rates and duration, then prefer MSP
   assert.equal(tracked.remaining.value, 220);
   assert.equal(tracked.variance.value, 50);
 });
+
+test('milestone report distinguishes completed, late and upcoming milestones', () => {
+  const ctx = evaluateRange('function sdDate()', 'function baselineOf', {
+    $: () => ({ value: '2025-01-10' })
+  });
+  const start = script.indexOf('function milestoneStatus(t)');
+  const end = script.indexOf('function milestoneReportHTML()', start);
+  vm.runInNewContext(script.slice(start, end), ctx);
+
+  assert.equal(vm.runInContext("milestoneStatus({pct:100,nf:new Date('2025-01-09'),v:{}})", ctx), 'completed');
+  assert.equal(vm.runInContext("milestoneStatus({pct:50,nf:new Date('2025-01-09'),v:{}})", ctx), 'late');
+  assert.equal(vm.runInContext("milestoneStatus({pct:50,nf:new Date('2025-01-20'),v:{}})", ctx), 'upcoming');
+});
+
+test('Gantt context adds configurable before and after project margins', () => {
+  const ctx = evaluateRange('const hasBaseline=', 'function signedDays', {
+    DAY: 86400000,
+    $: () => ({ checked: false }),
+    ganttContext: true,
+    ganttBefore: 30,
+    ganttAfter: 30
+  });
+  vm.runInContext(`
+    tasks = [
+      {s:new Date('2025-01-10T00:00:00'),f:new Date('2025-01-20T00:00:00'),
+       ns:new Date('2025-01-10T00:00:00'),nf:new Date('2025-01-20T00:00:00')}
+    ];
+  `, ctx);
+  const range = vm.runInContext('chartRange()', ctx);
+  assert.equal(range[0], +new Date('2024-12-11T00:00:00'));
+  assert.equal(range[1], +new Date('2025-02-19T00:00:00'));
+
+  vm.runInContext('ganttContext=false', ctx);
+  const noContext = vm.runInContext('chartRange()', ctx);
+  assert.equal(noContext[0], +new Date('2025-01-10T00:00:00'));
+  assert.equal(noContext[1], +new Date('2025-01-20T00:00:00'));
+});
+
+test('moving a predecessor recalculates successor dates', () => {
+  const ctx = evaluateRange('function setTaskDates', 'function rawVal', {
+    $: () => ({ checked: false }),
+    DAY: 86400000,
+    doc: {},
+    iso: d => d.toISOString().replace('.000Z', '').replace('Z', '')
+  });
+  vm.runInContext(`
+    function useCal(){return false}
+    function applyCst(t,s,c){return s}
+    function calOf(t){return null}
+    function durMs(t){return +t.f-+t.s}
+    function durPT(h){return 'PT'+h+'H0M'}
+    function wdays(t,a,b){return (+b-+a)/86400000}
+    function refreshLinks(){}
+    function syncTaskEl(t){}
+    function syncDom(){}
+    tasks=[
+      {uid:'1',s:new Date('2025-01-06T08:00:00'),f:new Date('2025-01-10T08:00:00'),
+       kids:[],sum:false,ms:false,preds:[],v:{},lvl:1},
+      {uid:'2',s:new Date('2025-01-13T08:00:00'),f:new Date('2025-01-17T08:00:00'),
+       kids:[],sum:false,ms:false,preds:[{uid:'1',type:1,lag:0}],v:{},lvl:1}
+    ];
+    byUid={1:tasks[0],2:tasks[1]};
+  `, ctx);
+  vm.runInContext(`
+    setTaskDates(tasks[0],new Date('2025-01-09T08:00:00'),new Date('2025-01-13T08:00:00'));
+    propagateTaskDates(tasks[0]);
+  `, ctx);
+  assert.equal(vm.runInContext('tasks[1].s.toISOString()', ctx), new Date('2025-01-13T08:00:00').toISOString());
+  assert.equal(vm.runInContext('tasks[1].f.toISOString()', ctx), new Date('2025-01-17T08:00:00').toISOString());
+});
